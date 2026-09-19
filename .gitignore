@@ -1,0 +1,92 @@
+# Unity 生成目录（模式匹配任意层级）
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emory[Cc]aptures/
+[Rr]ecordings/
+
+# Unity 资产商店工具
+[Aa]ssets/AssetStoreTools*
+[Aa]ssets/Plugins/AssetStoreTools*
+
+# Visual Studio / Rider / VS Code
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Mono 崩溃转储
+mono_crash.*.blob
+
+# Unity 崩溃报告
+sysinfo.txt
+crashlytics-build.properties
+Crashlytics.properties
+
+# macOS
+.DS_Store
+
+# ZCode 会话数据
+.zcode/
+
+# 本地开发工具包（com.besty.unity-skills）：本地保留使用，不入版本库（2026-08-24 出库）
+经世小镇/Packages/com.besty.unity-skills/
+
+# 构建产物（任意目录）
+*.apk
+*.aab
+*.app
+*.dmg
+*.ipa
+*.unitypackage
+ExportedObj/
+
+# Unity 崩溃恢复场景（编辑器自动生成，不入库）
+_Recovery/
+
+# 内部策划、工作记录与本地辅助文件
+PRD*.md
+AGENT_HANDOFF.md
+GAMEPLAY.md
+章节通关要素.md
+DocsArchive/
+docs/
+**/Assets/Docs/
+**/Assets/Docs.meta
+Captures/
+.claude/
+tools/
+一键打包并试玩.command
+经世小镇-美术改版预览.png
+
+# Unity 自动生成目录对应的 .meta 文件
+**/Assets/Temp.meta
+**/Assets/_Recovery.meta
+
+# 本地编辑器扩展与凭据
+com.besty.unity-skills/
+**/ProjectSettings/ProjectAuditorSettings.asset
+**/ProjectSettings/UnityConnectSettings.asset
+**/ProjectSettings/Packages/com.unity.ai.assistant/
+.env
+.env.*
+*.pem
+*.p12
+*.pfx
+*.key
