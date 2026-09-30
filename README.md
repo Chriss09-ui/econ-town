@@ -69,7 +69,18 @@ Packages/                        Unity 包配置
 ProjectSettings/                 Unity 项目设置
 ```
 
-项目包含编辑器测试，位于 `Assets/Scripts/EconTown/Editor/`，可通过 Unity Test Runner 运行。修改经济模拟或交互逻辑后，建议先运行对应测试，再进入主场景试玩。
+## 继续开发
+
+仓库根目录就是完整的 Unity 工程。首次打开时，Unity 会根据 `Packages/manifest.json` 和 `Packages/packages-lock.json` 恢复依赖并生成缓存，无需原作者的 `Library` 目录或本机编辑器扩展。
+
+- 修改经济模型、结算或存档逻辑，从 `Assets/Scripts/EconTown/Core/` 开始；修改面板和图表，从 `UI/` 开始；修改地图与交互，从 `World/` 开始。
+- 新增、移动或删除资源时，优先在 Unity 编辑器内操作，并将资源对应的 `.meta` 文件一起提交，以保留场景和资源之间的引用。
+- `Assets/` 中的工程资源、包配置和必要的 `ProjectSettings/` 设置应随修改提交。`Library/`、`Temp/`、构建输出和个人编辑器设置由 `.gitignore` 排除。
+- 共享开发文档和工具可以放在 `docs/`、`tools/`；PRD、内部归档和已知本地工作文件仍然排除。`.env.example`、`.env.sample` 可以提交占位配置，真实凭据应保存在本地。
+
+项目包含编辑器测试，位于 `Assets/Scripts/EconTown/Editor/`，可通过 Unity Test Runner 的 **EditMode** 入口运行。修改经济模拟或交互逻辑后，先运行对应测试，再打开 `Main.unity` 试玩。
+
+WebGL 构建入口为 Unity 菜单 **EconTown → Build → WebGL**。构建前需为对应 Unity 版本安装 WebGL Build Support 模块；默认输出到工程目录上一级的 `Builds/WebGL`。
 
 ## 第三方资源
 

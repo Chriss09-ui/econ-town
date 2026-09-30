@@ -1,13 +1,13 @@
-# Unity 生成目录（模式匹配任意层级）
-[Ll]ibrary/
-[Tt]emp/
-[Oo]bj/
-[Bb]uild/
-[Bb]uilds/
-[Ll]ogs/
-[Uu]ser[Ss]ettings/
-[Mm]emory[Cc]aptures/
-[Rr]ecordings/
+# Unity 工程根目录中的缓存与构建产物，避免误伤 Assets 内的同名目录
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emory[Cc]aptures/
+/[Rr]ecordings/
 
 # Unity 资产商店工具
 [Aa]ssets/AssetStoreTools*
@@ -45,9 +45,6 @@ Crashlytics.properties
 # ZCode 会话数据
 .zcode/
 
-# 本地开发工具包（com.besty.unity-skills）：本地保留使用，不入版本库（2026-08-24 出库）
-经世小镇/Packages/com.besty.unity-skills/
-
 # 构建产物（任意目录）
 *.apk
 *.aab
@@ -55,37 +52,41 @@ Crashlytics.properties
 *.dmg
 *.ipa
 *.unitypackage
-ExportedObj/
+/ExportedObj/
 
 # Unity 崩溃恢复场景（编辑器自动生成，不入库）
-_Recovery/
+**/Assets/_Recovery/
+**/Assets/Temp/
 
-# 内部策划、工作记录与本地辅助文件
+# 内部策划与已知本地文件；保留 docs/、tools/ 用于共享开发资料
 PRD*.md
-AGENT_HANDOFF.md
-GAMEPLAY.md
-章节通关要素.md
-DocsArchive/
-docs/
+/AGENT_HANDOFF.md
+/GAMEPLAY.md
+/章节通关要素.md
+/DocsArchive/
+/docs/superpowers/
+/docs/WebGL一键打包流程.md
 **/Assets/Docs/
 **/Assets/Docs.meta
-Captures/
-.claude/
-tools/
-一键打包并试玩.command
-经世小镇-美术改版预览.png
+/Captures/
+/.claude/
+/tools/webgl/serve_webgl.py
+/一键打包并试玩.command
+/经世小镇-美术改版预览.png
 
 # Unity 自动生成目录对应的 .meta 文件
 **/Assets/Temp.meta
 **/Assets/_Recovery.meta
 
 # 本地编辑器扩展与凭据
-com.besty.unity-skills/
+**/Packages/com.besty.unity-skills/
 **/ProjectSettings/ProjectAuditorSettings.asset
 **/ProjectSettings/UnityConnectSettings.asset
 **/ProjectSettings/Packages/com.unity.ai.assistant/
 .env
 .env.*
+!.env.example
+!.env.sample
 *.pem
 *.p12
 *.pfx
