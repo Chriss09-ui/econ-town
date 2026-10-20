@@ -113,8 +113,10 @@ namespace EconTown
             {
                 p.initialized = true;
                 MigrateExistingProgress(state);
+                p.pendingHandoffChapter = 0;
             }
             ApplyUnlocks(state);
+            MainlineGuide.ApplyRole(state);
         }
 
         public static ChapterDefinition Current(GameState state)
@@ -299,6 +301,8 @@ namespace EconTown
                 chapter.number == 53 ||  // V0.7 第七篇末章
                 chapter.number == 58;    // V0.9.5 第八篇末章
             if (partCompleted) CreateStageReport(state, chapter.part);
+            // 篇中交接次晨弹一张卡片；篇末已有阶段报告，不再叠一张。
+            p.pendingHandoffChapter = partCompleted ? 0 : chapter.number;
 
             if (chapter.number >= chapters.Length)
             {

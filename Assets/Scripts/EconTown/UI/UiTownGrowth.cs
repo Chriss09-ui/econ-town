@@ -49,20 +49,29 @@ namespace EconTown
 
             RectTransform head = WorldCard(c, "第 " + Mathf.Max(1, atm != null ? atm.conceptWeek : 1) + " 周 · 本周概念",
                 16f, 20f, 840f, 380f, WorldGold);
+            float conceptShift = 0f;
             if (card == null)
                 ShopText(head, "本周概念暂缺：还没有解锁的知识卡。\n\n继续经营小镇，知识卡会随章节与行为陆续到手——\n下周黑板会再换一张。",
                     20, UiTheme.TextSub, 32f, 70f, 776f, 280f, TextAnchor.UpperLeft);
             else
-                ShopText(head,
+            {
+                Text concept = ShopText(head,
                     "「" + card.title + "」\n\n" + card.body +
                     (string.IsNullOrEmpty(card.formula) ? "" : "\n\n" + card.formula) +
                     "\n\n——黑板每周一换；全部知识卡可在手册与实验室复习。",
                     20, UiTheme.TextMain, 32f, 56f, 776f, 300f, TextAnchor.UpperLeft);
+                conceptShift = ExpandTopText(concept);
+                if (conceptShift > 1f)
+                {
+                    head.sizeDelta = new Vector2(head.sizeDelta.x, head.sizeDelta.y + conceptShift);
+                    GrowPanel(root, conceptShift);
+                }
+            }
 
-            RectTransform note = WorldCard(c, "这块黑板是仪表，不是商店", 16f, 420f, 840f, 130f, WorldTeal);
+            RectTransform note = WorldCard(c, "这块黑板是仪表，不是商店", 16f, 420f + conceptShift, 840f, 130f, WorldTeal);
             ShopText(note, "书店是小镇学习进度的纪念品：它陈列的不是商品，是你已经学过的概念。",
                 18, UiTheme.TextSub, 28f, 52f, 780f, 60f, TextAnchor.MiddleLeft);
-            GrowthFooter(c, root);
+            GrowthFooter(c, root, 548f + conceptShift);
         }
 
         /// <summary>行政广场公告碑：市长称号与任期周期数（TermStyle 只读投影）+ 财政立场旗色图例。</summary>
@@ -162,10 +171,10 @@ namespace EconTown
             GrowthFooter(c, root);
         }
 
-        void GrowthFooter(RectTransform parent, GameObject root)
+        void GrowthFooter(RectTransform parent, GameObject root, float y = 548f)
         {
             Button close = UiTheme.MakeButton(parent, "返回小镇", () => ClosePanel(root), 19);
-            PlaceTopLeft(close.rectTransform(), 260f, 548f, 400f, 52f);
+            PlaceTopLeft(close.rectTransform(), 260f, y, 400f, 52f);
             UiTheme.SetButtonStyle(close, WorldTeal, Color.white);
         }
     }

@@ -31,7 +31,8 @@ namespace EconTown
                 "\n\n<color=#d6b77a>你看不到：</color>对方的真实成本、库存和利润。\n只能根据价格、排队、评分和后续行动推测其经营状况。\n\n这就是企业竞争中的「信息不完全」。";
             Text t = UiTheme.MakeText(c, body, 22, UiTheme.TextMain, TextAnchor.UpperLeft);
             t.rectTransform.Stretch();
-            t.rectTransform.offsetMin = new Vector2(10, 70);
+            t.rectTransform.offsetMin = new Vector2(10, 78);
+            FitTextAboveFooter(t);
 
             Button close = UiTheme.MakeButton(c, "离开 Sunny Tea", CloseTop, 21);
             close.rectTransform().anchorMin = close.rectTransform().anchorMax = new Vector2(0.5f, 0);
@@ -44,7 +45,6 @@ namespace EconTown
         {
             GameState s = GameState.I;
             if (s == null || !s.CompetitionActive) { ShowToast("市场中心将在企业篇完成、竞争企业开业后开放"); return; }
-            SyncCurrentView(s, PlayerViewMode.Enterprise);
 
             GameObject root = BeginPanel("市场中心", 900, 800);
             RectTransform c = ContentOf(root);
@@ -196,7 +196,8 @@ namespace EconTown
                 "市场中心已经开放。先营业一天，看看原来的顾客去了哪里。";
             Text t = UiTheme.MakeText(c, body, 23, UiTheme.TextMain, TextAnchor.UpperLeft);
             t.rectTransform.Stretch();
-            t.rectTransform.offsetMin = new Vector2(10, 70);
+            t.rectTransform.offsetMin = new Vector2(10, 84);
+            FitTextAboveFooter(t);
             Button ok = UiTheme.MakeButton(c, "迎接竞争", () =>
             {
                 ProgressionService.RecordSignal(s, ProgressSignals.CompetitorOpened,
@@ -224,14 +225,16 @@ namespace EconTown
             intro.rectTransform.pivot = new Vector2(0, 1);
             intro.rectTransform.anchoredPosition = new Vector2(8, -4);
             intro.rectTransform.sizeDelta = new Vector2(700, 120);
+            float introShift = ExpandTopText(intro);
+            GrowPanel(root, introShift);
 
-            StrategyChoiceButton(c, 0, "A  跟随降价", "抢回份额，但每杯利润变薄", () =>
+            StrategyChoiceButton(c, 0, 135f + introShift, "A  跟随降价", "抢回份额，但每杯利润变薄", () =>
             {
                 s.price = s.competitor.price;
                 s.todayStrategyChoice = PlayerCompetitionChoice.FollowPrice.ToString();
                 s.Changed(); ResolveMandatoryDecision(root);
             });
-            StrategyChoiceButton(c, 1, "B  保持价格", "接受部分顾客流失，守住单杯利润", () =>
+            StrategyChoiceButton(c, 1, 135f + introShift, "B  保持价格", "接受部分顾客流失，守住单杯利润", () =>
             {
                 s.todayStrategyChoice = PlayerCompetitionChoice.HoldPrice.ToString();
                 s.Changed(); ResolveMandatoryDecision(root);
@@ -239,7 +242,7 @@ namespace EconTown
             int nextQuality = Mathf.Min(3, s.playerQualityLevel + 1);
             float qualityCost = CompetitionEco.UpgradeCost(nextQuality);
             bool canUpgrade = s.playerQualityLevel < 3 && s.money >= qualityCost;
-            Button qualityChoice = StrategyChoiceButton(c, 2, "C  提高品质",
+            Button qualityChoice = StrategyChoiceButton(c, 2, 135f + introShift, "C  提高品质",
                 canUpgrade ? "用差异化回应 · 成本 ¥" + qualityCost.ToString("0") :
                     s.playerQualityLevel >= 3 ? "品质已满级" : "资金不足 · 需要 ¥" + qualityCost.ToString("0"), () =>
             {
@@ -251,7 +254,7 @@ namespace EconTown
             });
             qualityChoice.interactable = canUpgrade;
             bool canAdvertise = s.money >= 300f;
-            Button advertiseChoice = StrategyChoiceButton(c, 3, "D  增加广告",
+            Button advertiseChoice = StrategyChoiceButton(c, 3, 135f + introShift, "D  增加广告",
                 canAdvertise ? "花 ¥300 提高品牌与客流" : "资金不足 · 需要 ¥300", () =>
             {
                 s.marketingBudget = Mathf.Max(300f, s.marketingBudget);
@@ -261,12 +264,12 @@ namespace EconTown
             advertiseChoice.interactable = canAdvertise;
         }
 
-        Button StrategyChoiceButton(RectTransform c, int index, string title, string desc, System.Action action)
+        Button StrategyChoiceButton(RectTransform c, int index, float top, string title, string desc, System.Action action)
         {
             Button b = UiTheme.MakeButton(c, title + "\n<size=17>" + desc + "</size>", action, 21);
             b.rectTransform().anchorMin = b.rectTransform().anchorMax = new Vector2(0.5f, 1);
             b.rectTransform().pivot = new Vector2(0.5f, 1);
-            b.rectTransform().anchoredPosition = new Vector2(0, -(135 + index * 94));
+            b.rectTransform().anchoredPosition = new Vector2(0, -(top + index * 94));
             b.rectTransform().sizeDelta = new Vector2(650, 82);
             return b;
         }
@@ -353,22 +356,24 @@ namespace EconTown
             intro.rectTransform.pivot = new Vector2(0, 1);
             intro.rectTransform.anchoredPosition = new Vector2(8, -4);
             intro.rectTransform.sizeDelta = new Vector2(700, 70);
+            float introShift = ExpandTopText(intro);
+            GrowPanel(root, introShift);
 
-            ExperimentButton(c, 0, "完全竞争 · 8 家相同摊位", "市场价 10 元，你要卖 10 还是 15？",
+            ExperimentButton(c, 0, 90f + introShift, "完全竞争 · 8 家相同摊位", "市场价 10 元，你要卖 10 还是 15？",
                 (s.marketExperimentMask & 1) != 0, () => { CloseTop(); ShowPerfectCompetitionChoice(); });
-            ExperimentButton(c, 1, "寡头 · 只有 3 家公司", "一次降价会引发另外两家的回应",
+            ExperimentButton(c, 1, 90f + introShift, "寡头 · 只有 3 家公司", "一次降价会引发另外两家的回应",
                 (s.marketExperimentMask & 2) != 0, () => { CloseTop(); ShowOligopolyChoice(); });
-            ExperimentButton(c, 2, "垄断 · 只剩你的店", "提高价格会增加利润，也会减少消费者剩余",
+            ExperimentButton(c, 2, 90f + introShift, "垄断 · 只剩你的店", "提高价格会增加利润，也会减少消费者剩余",
                 (s.marketExperimentMask & 4) != 0, () => { CloseTop(); ShowMonopolyChoice(); });
         }
 
-        void ExperimentButton(RectTransform c, int index, string title, string desc, bool completed, System.Action action)
+        void ExperimentButton(RectTransform c, int index, float top, string title, string desc, bool completed, System.Action action)
         {
             string status = completed ? "  ✓ 已完成" : "";
             Button b = UiTheme.MakeButton(c, title + status + "\n<size=17>" + desc + "</size>", action, 21);
             b.rectTransform().anchorMin = b.rectTransform().anchorMax = new Vector2(0.5f, 1);
             b.rectTransform().pivot = new Vector2(0.5f, 1);
-            b.rectTransform().anchoredPosition = new Vector2(0, -(90 + index * 115));
+            b.rectTransform().anchoredPosition = new Vector2(0, -(top + index * 115));
             b.rectTransform().sizeDelta = new Vector2(650, 98);
             if (completed) b.image.color = new Color32(0x9d, 0xc2, 0xa7, 255);
         }
@@ -382,13 +387,15 @@ namespace EconTown
             t.rectTransform.pivot = new Vector2(0, 1);
             t.rectTransform.anchoredPosition = new Vector2(8, -4);
             t.rectTransform.sizeDelta = new Vector2(696, 74);
+            float shift = ExpandTopText(t);
+            GrowPanel(root, shift);
             BuildParticipantStrip(c,
-                new[] { "你\n¥10", "摊位 2\n¥10", "摊位 3\n¥10", "摊位 4\n¥10", "摊位 5\n¥10", "摊位 6\n¥10", "摊位 7\n¥10", "摊位 8\n¥10" }, 88f);
-            ExperimentChoice(c, 220f, "卖 10 元 · 接受市场价", () => CompleteExperiment(1, "完全竞争实验结果",
+                new[] { "你\n¥10", "摊位 2\n¥10", "摊位 3\n¥10", "摊位 4\n¥10", "摊位 5\n¥10", "摊位 6\n¥10", "摊位 7\n¥10", "摊位 8\n¥10" }, 88f + shift);
+            ExperimentChoice(c, 220f + shift, "卖 10 元 · 接受市场价", () => CompleteExperiment(1, "完全竞争实验结果",
                 "你按市场价 10 元出售，预计仍能卖出约 80 杯。利润不高，但可以继续参与市场。\n\n在完全竞争里，单个企业是价格接受者。"));
-            ExperimentChoice(c, 304f, "卖 15 元 · 尝试自己定价", () => CompleteExperiment(1, "完全竞争实验结果",
+            ExperimentChoice(c, 304f + shift, "卖 15 元 · 尝试自己定价", () => CompleteExperiment(1, "完全竞争实验结果",
                 "你的价格比另外 7 家高 50%，预计销量接近 0。顾客无需牺牲品质，就能立刻去隔壁购买。\n\n完全相同的产品让单个企业几乎没有定价能力。"));
-            ExperimentFootnote(c, "8 家 · 产品相同 · 单个摊位几乎没有定价权");
+            ExperimentFootnote(c, "8 家 · 产品相同 · 单个摊位几乎没有定价权", 402f + shift);
         }
 
         void ShowOligopolyChoice()
@@ -400,12 +407,14 @@ namespace EconTown
             t.rectTransform.pivot = new Vector2(0, 1);
             t.rectTransform.anchoredPosition = new Vector2(8, -4);
             t.rectTransform.sizeDelta = new Vector2(696, 74);
-            BuildParticipantStrip(c, new[] { "你\n¥18", "A 公司\n¥18", "B 公司\n¥18" }, 88f);
-            ExperimentChoice(c, 220f, "保持 18 元", () => CompleteExperiment(2, "寡头实验结果",
+            float shift = ExpandTopText(t);
+            GrowPanel(root, shift);
+            BuildParticipantStrip(c, new[] { "你\n¥18", "A 公司\n¥18", "B 公司\n¥18" }, 88f + shift);
+            ExperimentChoice(c, 220f + shift, "保持 18 元", () => CompleteExperiment(2, "寡头实验结果",
                 "三家都保持价格，份额约各占三分之一，利润相对稳定。但任何一家都有偷偷降价抢客的诱惑。\n\n少数企业彼此依赖，这就是寡头市场。"));
-            ExperimentChoice(c, 304f, "降到 14 元抢客", () => CompleteExperiment(2, "寡头实验结果",
+            ExperimentChoice(c, 304f + shift, "降到 14 元抢客", () => CompleteExperiment(2, "寡头实验结果",
                 "你第一轮可能抢到约一半顾客；下一轮 A、B 两家公司全部跟随降价。你的份额回落，三家利润一起下降。\n\n在寡头市场，一家企业的行动会触发其他企业回应。"));
-            ExperimentFootnote(c, "3 家 · 决策相互依赖 · 降价会触发连锁回应");
+            ExperimentFootnote(c, "3 家 · 决策相互依赖 · 降价会触发连锁回应", 402f + shift);
         }
 
         void ShowMonopolyChoice()
@@ -417,12 +426,14 @@ namespace EconTown
             t.rectTransform.pivot = new Vector2(0, 1);
             t.rectTransform.anchoredPosition = new Vector2(8, -4);
             t.rectTransform.sizeDelta = new Vector2(696, 74);
-            BuildParticipantStrip(c, new[] { "唯一供应者\n你的店" }, 88f);
-            ExperimentChoice(c, 220f, "卖 15 元 · 更多居民买得到", () => CompleteExperiment(4, "垄断实验结果",
+            float shift = ExpandTopText(t);
+            GrowPanel(root, shift);
+            BuildParticipantStrip(c, new[] { "唯一供应者\n你的店" }, 88f + shift);
+            ExperimentChoice(c, 220f + shift, "卖 15 元 · 更多居民买得到", () => CompleteExperiment(4, "垄断实验结果",
                 "愿付 20 元的居民只支付 15 元，每杯获得 5 元消费者剩余。若最低供给成本为 8 元，生产者剩余约为 7 元/杯。\n\n较低价格让更多交易发生，总福利更高。"));
-            ExperimentChoice(c, 304f, "卖 25 元 · 使用定价权", () => CompleteExperiment(4, "垄断实验结果",
+            ExperimentChoice(c, 304f + shift, "卖 25 元 · 使用定价权", () => CompleteExperiment(4, "垄断实验结果",
                 "售价提高后单杯利润增加，但愿付价格只有 20 元的居民会退出，消费者剩余降到 0，销量也会下降。\n\n垄断带来定价能力，也可能减少消费者福利。"));
-            ExperimentFootnote(c, "1 家 · 拥有定价权 · 利润与消费者福利发生冲突");
+            ExperimentFootnote(c, "1 家 · 拥有定价权 · 利润与消费者福利发生冲突", 402f + shift);
         }
 
         void ExperimentChoice(RectTransform c, float y, string label, System.Action action)
@@ -455,10 +466,10 @@ namespace EconTown
             }
         }
 
-        void ExperimentFootnote(RectTransform parent, string value)
+        void ExperimentFootnote(RectTransform parent, string value, float y = 402f)
         {
             Image note = UiTheme.MakeImage(parent, new Color32(0x3b, 0x2e, 0x27, 245), "experimentFootnote");
-            PlaceTopLeft(note.rectTransform, 68f, 402f, 580f, 54f);
+            PlaceTopLeft(note.rectTransform, 68f, y, 580f, 54f);
             ShopText(note.rectTransform, value, 16, UiTheme.TextSub,
                 12f, 0f, 556f, 54f, TextAnchor.MiddleCenter, FontStyle.Bold);
         }

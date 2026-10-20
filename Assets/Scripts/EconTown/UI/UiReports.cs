@@ -228,8 +228,7 @@ namespace EconTown
             t.rectTransform.pivot = new Vector2(0.5f, 1f);
             t.rectTransform.anchoredPosition = new Vector2(0f, -16f);
             t.rectTransform.sizeDelta = new Vector2(-32f, 100f);
-            Canvas.ForceUpdateCanvases();
-            float bodyHeight = Mathf.Max(408f, t.preferredHeight);
+            float bodyHeight = Mathf.Max(408f, MeasuredTextHeight(t));
             t.rectTransform.sizeDelta = new Vector2(-32f, bodyHeight);
             scrollContent.sizeDelta = new Vector2(0f, bodyHeight + 32f);
 

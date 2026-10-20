@@ -23,6 +23,17 @@ namespace EconTown
         public TextMeshProUGUI Rendered { get { return rendered; } }
         public bool UsingLegacyFallback { get { return usingLegacyFallback; } }
 
+        public float VisiblePreferredHeight()
+        {
+            SyncNow(true);
+            if (rendered != null && rendered.enabled)
+            {
+                rendered.ForceMeshUpdate(true);
+                return rendered.preferredHeight;
+            }
+            return source != null ? source.preferredHeight : 0f;
+        }
+
         public static CrispTextMirror Attach(Text text, TMP_FontAsset font)
         {
             if (text == null || font == null) return null;

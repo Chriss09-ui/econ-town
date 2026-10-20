@@ -21,7 +21,6 @@ namespace EconTown
             FinancialSystemService.Ensure(state);
             ProgressionService.Ensure(state);
             selectedTab = Mathf.Clamp(selectedTab, 0, 4);
-            SyncCurrentView(state, selectedTab == 3 ? PlayerViewMode.CentralBank : PlayerViewMode.Bank);
 
             GameObject root = BeginPanel("金融中心 · 银行与央行", 1260f, 840f);
             root.name = "panel_finance_center";

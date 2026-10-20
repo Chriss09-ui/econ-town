@@ -1,5 +1,9 @@
 # Unity 工程根目录中的缓存与构建产物，避免误伤 Assets 内的同名目录
 /[Ll]ibrary/
+/My project/[Ll]ibrary/
+/My project/[Tt]emp/
+/My project/[Ll]ogs/
+/My project/[Uu]ser[Ss]ettings/
 /[Tt]emp/
 /[Oo]bj/
 /[Bb]uild/

@@ -692,6 +692,7 @@ namespace EconTown
             t.rectTransform.Stretch();
             t.rectTransform.offsetMin = new Vector2(8f, 88f);
             t.rectTransform.offsetMax = new Vector2(-8f, -8f);
+            FitTextAboveFooter(t);
 
             Button understand = UiTheme.MakeButton(c,
                 status >= KnowledgeStatus.Understood ? "已理解" : "我理解了", () =>
@@ -746,18 +747,40 @@ namespace EconTown
                 case "demand": ShowCurves(0); break;
                 case "cost": ShowCurves(1); break;
                 case "resident":
-                    if (GameState.I.resident.profileCreated) ShowResidentExperiments();
+                    if (!MainlineGuide.CanEnter(GameState.I, PlayerViewMode.Resident))
+                        ShowToast(MainlineGuide.LockReason(PlayerViewMode.Resident));
+                    else if (GameState.I.resident.profileCreated) ShowResidentExperiments();
                     else ShowResidentHome();
                     break;
                 case "market":
                     if (GameState.I.CompetitionActive) ShowMarketExperiments();
                     else ShowToast("完成企业篇、进入市场竞争后开放这个实验");
                     break;
-                case "publicgood": ShowGovernmentDashboard(5); break;
-                case "government": ShowGovernmentDashboard(1); break;
-                case "macro": ShowMacroDashboard(3); break;
-                case "finance": ShowFinanceCenter(0); break;   // V0.6 遗留缺口修复:此前点"再试一次"无任何反应
-                case "world": ShowWorldEconomy(0); break;      // V0.7 国际实验统一入口
+                case "publicgood":
+                    if (!MainlineGuide.CanEnter(GameState.I, PlayerViewMode.Government))
+                        ShowToast(MainlineGuide.LockReason(PlayerViewMode.Government));
+                    else ShowGovernmentDashboard(5);
+                    break;
+                case "government":
+                    if (!MainlineGuide.CanEnter(GameState.I, PlayerViewMode.Government))
+                        ShowToast(MainlineGuide.LockReason(PlayerViewMode.Government));
+                    else ShowGovernmentDashboard(1);
+                    break;
+                case "macro":
+                    if (!MainlineGuide.CanEnter(GameState.I, PlayerViewMode.Macro))
+                        ShowToast(MainlineGuide.LockReason(PlayerViewMode.Macro));
+                    else ShowMacroDashboard(3);
+                    break;
+                case "finance":
+                    if (!MainlineGuide.CanEnter(GameState.I, PlayerViewMode.Bank))
+                        ShowToast(MainlineGuide.LockReason(PlayerViewMode.Bank));
+                    else ShowFinanceCenter(0);
+                    break;
+                case "world":
+                    if (!MainlineGuide.CanEnterTrade(GameState.I))
+                        ShowToast(MainlineGuide.TradeLockReason());
+                    else ShowWorldEconomy(0);
+                    break;
             }
         }
 
@@ -768,7 +791,8 @@ namespace EconTown
             Text text = UiTheme.MakeText(c,
                 "<b>供给与需求</b>\n　↓\n<b>弹性</b>\n　↓\n<b>企业定价与成本</b>\n　↓\n<b>市场竞争与博弈</b>\n　↓\n<b>税收、外部性与财政</b>\n　↓\n<b>总需求、总供给与长期增长</b>\n\n每一步都可以从卡片的“再试一次”回到相关实验。",
                 22, UiTheme.TextMain, TextAnchor.MiddleCenter);
-            text.rectTransform.Stretch(); text.rectTransform.offsetMin = new Vector2(20f, 70f); text.rectTransform.offsetMax = new Vector2(-20f, -10f);
+            text.rectTransform.Stretch(); text.rectTransform.offsetMin = new Vector2(20f, 76f); text.rectTransform.offsetMax = new Vector2(-20f, -10f);
+            FitTextAboveFooter(text);
             Button close = UiTheme.MakeButton(c, "关闭", () => ClosePanel(root), 19);
             close.rectTransform().anchorMin = close.rectTransform().anchorMax = new Vector2(.5f, 0f);
             close.rectTransform().pivot = new Vector2(.5f, 0f); close.rectTransform().anchoredPosition = new Vector2(0f, 8f); close.rectTransform().sizeDelta = new Vector2(200f, 48f);
@@ -790,7 +814,8 @@ namespace EconTown
             }
             if (body.Length == 0) body.Append("打开一张已发现卡片并标记“我理解了”后，解释会进入这里。教学提示关闭后也能随时回看。");
             Text text = UiTheme.MakeText(c, body.ToString(), 18, UiTheme.TextMain, TextAnchor.UpperLeft);
-            text.rectTransform.Stretch(); text.rectTransform.offsetMin = new Vector2(12f, 72f); text.rectTransform.offsetMax = new Vector2(-12f, -8f);
+            text.rectTransform.Stretch(); text.rectTransform.offsetMin = new Vector2(12f, 76f); text.rectTransform.offsetMax = new Vector2(-12f, -8f);
+            FitTextAboveFooter(text);
             Button close = UiTheme.MakeButton(c, "关闭", () => ClosePanel(root), 18);
             close.rectTransform().anchorMin = close.rectTransform().anchorMax = new Vector2(.5f, 0f);
             close.rectTransform().pivot = new Vector2(.5f, 0f); close.rectTransform().anchoredPosition = new Vector2(0f, 8f); close.rectTransform().sizeDelta = new Vector2(200f, 48f);

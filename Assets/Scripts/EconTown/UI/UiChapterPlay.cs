@@ -163,7 +163,7 @@ namespace EconTown
         {
             if (part == null) return;
             ChapterDefinition chapter = ProgressionService.Current(GameState.I);
-            GameObject root = BeginPanel("篇章游玩 · " + part.Title, 720f, 500f);
+            GameObject root = BeginPanel("篇章游玩 · " + part.Title, 720f, 540f);
             RectTransform c = ContentOf(root);
             string firstChapter = chapter != null
                 ? "Chapter " + chapter.number + "《" + chapter.title + "》"
@@ -174,9 +174,16 @@ namespace EconTown
                 "当前章的通关条件尚未完成。从现在起，任务、收日、报告和演出都沿用正式剧情规则。\n\n" +
                 "左上角会常驻显示「篇章游玩」；可在设置中换篇或回到正式剧情。",
                 20, UiTheme.TextMain, TextAnchor.UpperLeft);
-            PlaceTopLeft(body.rectTransform, 24f, 10f, 616f, 270f);
+            body.rectTransform.anchorMin = Vector2.zero;
+            body.rectTransform.anchorMax = Vector2.one;
+            body.rectTransform.offsetMin = new Vector2(24f, 84f);
+            body.rectTransform.offsetMax = new Vector2(-24f, -10f);
+            FitTextAboveFooter(body);
             Button start = UiTheme.MakeButton(c, "开始本篇", () => ClosePanel(root), 21);
-            PlaceTopLeft(start.rectTransform(), 220f, 310f, 240f, 54f);
+            start.rectTransform().anchorMin = start.rectTransform().anchorMax = new Vector2(0.5f, 0f);
+            start.rectTransform().pivot = new Vector2(0.5f, 0f);
+            start.rectTransform().anchoredPosition = new Vector2(0f, 14f);
+            start.rectTransform().sizeDelta = new Vector2(240f, 54f);
             UiTheme.SetButtonStyle(start, UiTheme.Accent, UiTheme.Ink);
         }
 

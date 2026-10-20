@@ -13,8 +13,9 @@ namespace EconTown
             RectTransform c = ContentOf(root);
             Text t = UiTheme.MakeText(c, body, 22, UiTheme.TextMain, TextAnchor.UpperLeft);
             t.rectTransform.Stretch();
-            t.rectTransform.offsetMin = new Vector2(8f, 72f);
+            t.rectTransform.offsetMin = new Vector2(8f, 76f);
             t.rectTransform.offsetMax = new Vector2(-8f, -8f);
+            FitTextAboveFooter(t);
             Button ok = UiTheme.MakeButton(c, "知道了", CloseTop, 22);
             ok.rectTransform().anchorMin = ok.rectTransform().anchorMax = new Vector2(0.5f, 0);
             ok.rectTransform().pivot = new Vector2(0.5f, 0f);
@@ -151,7 +152,6 @@ namespace EconTown
         {
             GameState s = GameState.I;
             if (s == null) return;
-            SyncCurrentView(s, PlayerViewMode.Enterprise);
             if (s.phase == GamePhase.Report) { ShowReport(s.LastRecord); return; }
             if (s.phase != GamePhase.Morning) { ShowToast("现在不是营业准备时间"); return; }
 
@@ -229,12 +229,12 @@ namespace EconTown
             float operationY = 50f;
             if (s.CanEmployees)
             {
-                empVal = ShopStepper(operationsCard, "当班店员", "人越多，服务上限越高", operationY,
+                empVal = ShopStepper(operationsCard, "雇佣人手", "人数越多，一天能接待的客人越多", operationY,
                     s.employees + " 人",
                     () => { s.employees = Mathf.Max(1, s.employees - 1); s.Changed(); },
                     () => { s.employees = Mathf.Min(Eco.MaxEmployees, s.employees + 1); s.Changed(); });
             }
-            else ShopLockedRow(operationsCard, "当班店员", "完成企业篇第 3 章解锁", operationY);
+            else ShopLockedRow(operationsCard, "雇佣人手", "完成第 3 章后才能雇人", operationY);
             operationY += 62f;
 
             if (s.CanMaterials)
@@ -527,6 +527,9 @@ namespace EconTown
 
             Text t = UiTheme.MakeText(c, body, 22, UiTheme.TextMain, TextAnchor.UpperLeft);
             t.rectTransform.Stretch();
+            t.rectTransform.offsetMin = new Vector2(8f, 72f);
+            t.rectTransform.offsetMax = new Vector2(-8f, -8f);
+            FitTextAboveFooter(t);
 
             Button ok = UiTheme.MakeButton(c, "关闭", CloseTop, 21);
             ok.rectTransform().anchorMin = ok.rectTransform().anchorMax = new Vector2(0.5f, 0);

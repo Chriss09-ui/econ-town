@@ -150,7 +150,36 @@ namespace EconTown
                     .Append(entry.summary).Append("\n\n");
             }
             if (body.Length == 0) body.Append("重要的开业、价格战、政策、冲击、危机与复苏会按真实发生顺序记录在这里。");
-            ExperienceText(content, body.ToString(), 18, 18f, 54f, 836f, 498f, UiTheme.TextMain);
+            Image scrollArea = UiTheme.MakeImage(content, new Color32(0x32, 0x2b, 0x27, 255), "historyScroll");
+            PlaceTopLeft(scrollArea.rectTransform, 18f, 54f, 836f, 500f);
+            scrollArea.raycastTarget = true;
+            scrollArea.gameObject.AddComponent<RectMask2D>();
+            GameObject historyObject = new GameObject("historyContent", typeof(RectTransform));
+            historyObject.transform.SetParent(scrollArea.transform, false);
+            RectTransform historyContent = historyObject.GetComponent<RectTransform>();
+            historyContent.anchorMin = new Vector2(0f, 1f);
+            historyContent.anchorMax = new Vector2(1f, 1f);
+            historyContent.pivot = new Vector2(0.5f, 1f);
+            historyContent.anchoredPosition = Vector2.zero;
+            Text history = UiTheme.MakeText(historyContent, body.ToString(), 18, UiTheme.TextMain, TextAnchor.UpperLeft);
+            history.horizontalOverflow = HorizontalWrapMode.Wrap;
+            history.verticalOverflow = VerticalWrapMode.Overflow;
+            history.rectTransform.anchorMin = new Vector2(0f, 1f);
+            history.rectTransform.anchorMax = new Vector2(1f, 1f);
+            history.rectTransform.pivot = new Vector2(0.5f, 1f);
+            history.rectTransform.anchoredPosition = new Vector2(0f, -12f);
+            history.rectTransform.sizeDelta = new Vector2(-28f, 100f);
+            float historyHeight = Mathf.Max(476f, MeasuredTextHeight(history));
+            history.rectTransform.sizeDelta = new Vector2(-28f, historyHeight);
+            historyContent.sizeDelta = new Vector2(0f, historyHeight + 24f);
+            ScrollRect historyScroll = scrollArea.gameObject.AddComponent<ScrollRect>();
+            historyScroll.viewport = scrollArea.rectTransform;
+            historyScroll.content = historyContent;
+            historyScroll.horizontal = false;
+            historyScroll.vertical = true;
+            historyScroll.movementType = ScrollRect.MovementType.Clamped;
+            historyScroll.scrollSensitivity = 32f;
+            historyScroll.verticalNormalizedPosition = 1f;
             Button close = UiTheme.MakeButton(content, "返回", () => ClosePanel(root), 19);
             PlaceTopLeft(close.rectTransform(), 330f, 570f, 220f, 50f);
         }
@@ -190,14 +219,17 @@ namespace EconTown
             string body = "<b>危机发生</b>　Day " + review.startedWorldDay + "\n" + review.cause +
                 "\n\n<b>恢复过程</b>\n" + review.recovery +
                 "\n\n<b>恢复结果</b>　Day " + review.recoveredWorldDay + "\n" + review.result;
-            ExperienceText(content, body, 20, 22f, 10f, 728f, 424f, UiTheme.TextMain);
+            Text reviewText = ExperienceText(content, body, 20, 22f, 10f, 728f, 424f, UiTheme.TextMain);
+            reviewText.verticalOverflow = VerticalWrapMode.Overflow;
+            float reviewShift = ExpandTopText(reviewText);
+            GrowPanel(root, reviewShift);
             Button close = UiTheme.MakeButton(content, "完成复盘", () =>
             {
                 if (GameState.I.experience.pendingCrisisReview == review)
                     GameState.I.experience.pendingCrisisReview = null;
                 ClosePanel(root);
             }, 20);
-            PlaceTopLeft(close.rectTransform(), 260f, 466f, 260f, 52f);
+            PlaceTopLeft(close.rectTransform(), 260f, 466f + reviewShift, 260f, 52f);
         }
 
         void ShowCrisisReviewArchive()
@@ -215,9 +247,24 @@ namespace EconTown
         void OpenExperienceTarget(string target)
         {
             CloseAll();
-            if (target == "resident") ShowResidentHome();
-            else if (target == "government") ShowGovernmentDashboard();
-            else if (target == "macro") ShowMacroDashboard();
+            if (target == "resident")
+            {
+                if (!MainlineGuide.CanEnter(GameState.I, PlayerViewMode.Resident))
+                    ShowToast(MainlineGuide.LockReason(PlayerViewMode.Resident));
+                else ShowResidentHome();
+            }
+            else if (target == "government")
+            {
+                if (!MainlineGuide.CanEnter(GameState.I, PlayerViewMode.Government))
+                    ShowToast(MainlineGuide.LockReason(PlayerViewMode.Government));
+                else ShowGovernmentDashboard();
+            }
+            else if (target == "macro")
+            {
+                if (!MainlineGuide.CanEnter(GameState.I, PlayerViewMode.Macro))
+                    ShowToast(MainlineGuide.LockReason(PlayerViewMode.Macro));
+                else ShowMacroDashboard();
+            }
             else ShowShop();
         }
 

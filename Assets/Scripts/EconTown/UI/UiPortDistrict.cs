@@ -56,9 +56,15 @@ namespace EconTown
                 : PortPresentationService.NetExportsTeachingLine(snapshot);
             if (snapshot.recessionActive)
                 body += "\n\nB 国需求收缩中：理想订单 ×0.82（当前订单若仍高于你的供给上限，出货暂未受影响）。";
-            ShopText(teaching, body, 20, UiTheme.TextMain, 28f, 56f, 840f, 128f, TextAnchor.UpperLeft);
+            Text teachingText = ShopText(teaching, body, 20, UiTheme.TextMain, 28f, 56f, 840f, 128f, TextAnchor.UpperLeft);
+            float teachingShift = ExpandTopText(teachingText);
+            if (teachingShift > 1f)
+            {
+                teaching.sizeDelta = new Vector2(teaching.sizeDelta.x, teaching.sizeDelta.y + teachingShift);
+                GrowPanel(root, teachingShift);
+            }
 
-            CustomsFooterButtons(c, root);
+            CustomsFooterButtons(c, root, 548f + teachingShift);
         }
 
         static string CraneTierName(PortCraneTier tier)
@@ -69,15 +75,15 @@ namespace EconTown
             return "静止 / 微摆";
         }
 
-        void CustomsFooterButtons(RectTransform parent, GameObject root)
+        void CustomsFooterButtons(RectTransform parent, GameObject root, float y = 548f)
         {
             Button economy = UiTheme.MakeButton(parent, "打开世界经济中心",
                 () => { ClosePanel(root); ShowWorldEconomy(0); }, 18);
-            PlaceTopLeft(economy.rectTransform(), 56f, 548f, 400f, 52f);
+            PlaceTopLeft(economy.rectTransform(), 56f, y, 400f, 52f);
             UiTheme.SetButtonStyle(economy, WorldGold, UiTheme.Ink);
 
             Button close = UiTheme.MakeButton(parent, "返回码头", () => ClosePanel(root), 19);
-            PlaceTopLeft(close.rectTransform(), 476f, 548f, 400f, 52f);
+            PlaceTopLeft(close.rectTransform(), 476f, y, 400f, 52f);
             UiTheme.SetButtonStyle(close, WorldTeal, Color.white);
         }
     }

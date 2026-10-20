@@ -81,6 +81,10 @@ namespace EconTown
         // 已弹过"章节解锁"Toast 的最高章号：解锁提示只应弹一次，
         // 按 completedChapter 持续状态判定会每个无事件清晨重复弹同一条。
         public int notifiedUnlockChapter;
+        // 刚完成、次晨要交代的章号。篇末交给阶段报告，这里记 0。
+        public int pendingHandoffChapter;
+        // 玩家点过「先逛逛」或「去做」的世界日。同一天不再弹主线卡片。
+        public int mainlineCueSeenDay;
         public bool initialized;
         public List<string> signals = new List<string>();
         public List<KeyDecisionRecord> decisions = new List<KeyDecisionRecord>();

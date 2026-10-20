@@ -16,15 +16,16 @@ namespace EconTown
                 1040f, 870f);
             RectTransform c = ContentOf(root);
             ChapterDefinition current = ProgressionService.Current(s);
+            MainlineGuide.Cue cue = MainlineGuide.Build(s);
 
             Image currentCard = UiTheme.MakeImage(c, new Color32(0x43, 0x35, 0x2b, 255), "currentChapterCard");
             PlaceTopLeft(currentCard.rectTransform, 8f, 0f, 976f, 116f);
             Text currentText = UiTheme.MakeText(currentCard.transform,
                 current == null
                     ? "<b>自由经济时代</b>\n八篇主线已完成。你可以继续经营、进世界市场做贸易、进入挑战或创建经济实验。"
-                    : "<size=16>" + ProgressionService.ActLabel(current.part) + "</size>\n<b>" +
-                      ProgressionService.PartTitle(current.part) + " · Chapter " + current.number + "　" + current.title +
-                      "</b>\n当前任务：" + current.task + "\n学习目标：" + current.learningGoal,
+                    : "<size=16>" + ProgressionService.ActLabel(current.part) + " · " + MainlineGuide.RoleName(s) + "</size>\n<b>" +
+                      ProgressionService.PartTitle(current.part) + " · 第 " + current.number + " 章　" + current.title +
+                      "</b>\n现在：" + cue.line + "\n学到的是：" + current.learningGoal,
                 20, UiTheme.TextMain, TextAnchor.MiddleLeft);
             currentText.rectTransform.Stretch();
             currentText.rectTransform.offsetMin = new Vector2(18f, 10f);
@@ -154,6 +155,7 @@ namespace EconTown
             if (report.keyDecisions == null || report.keyDecisions.Count == 0) body.Append("暂无手动标记的关键决策，后续选择会记录在这里。");
             else for (int i = 0; i < report.keyDecisions.Count; i++) body.Append("• ").Append(report.keyDecisions[i]).Append('\n');
             body.Append("\n<b>下一程</b>\n").Append(ProgressionService.NextJourneyText(report.part));
+            body.Append("\n\n<b>你的身份</b>\n").Append(MainlineGuide.IdentityAfter(report.part));
             Image scrollArea = UiTheme.MakeImage(c, new Color32(0x32, 0x2b, 0x27, 255), "stageReportScroll");
             PlaceTopLeft(scrollArea.rectTransform, 8f, 0f, 828f, 500f);
             scrollArea.raycastTarget = true;
@@ -174,8 +176,7 @@ namespace EconTown
             text.rectTransform.pivot = new Vector2(.5f, 1f);
             text.rectTransform.anchoredPosition = new Vector2(0f, -16f);
             text.rectTransform.sizeDelta = new Vector2(-32f, 100f);
-            Canvas.ForceUpdateCanvases();
-            float reportHeight = Mathf.Max(468f, text.preferredHeight);
+            float reportHeight = Mathf.Max(468f, MeasuredTextHeight(text));
             text.rectTransform.sizeDelta = new Vector2(-32f, reportHeight);
             scrollContent.sizeDelta = new Vector2(0f, reportHeight + 32f);
             ScrollRect scroll = scrollArea.gameObject.AddComponent<ScrollRect>();

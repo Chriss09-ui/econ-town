@@ -16,7 +16,6 @@ namespace EconTown
         {
             GameState state = GameState.I;
             if (state == null) return;
-            SyncCurrentView(state, PlayerViewMode.Government);
             GovernmentSimulator.Ensure(state);
             selectedTab = Mathf.Clamp(selectedTab, 0, 6);
 
@@ -25,13 +24,24 @@ namespace EconTown
             root.name = "panel_government_dashboard";
             RectTransform content = ContentOf(root);
 
-            string governmentMode = government.termReportViewed ?
-                "主线政策课程已完成 · 自由治理" : GovernmentSimulator.ChapterTitle(government.chapter);
+            ChapterDefinition govChapter = ProgressionService.Current(state);
+            string governmentMode = govChapter != null && govChapter.part == LearningPart.Government
+                ? "第 " + govChapter.number + " 章 · " + govChapter.title
+                : government.termReportViewed ? "市政厅 · 可以继续治理" : "市政厅";
             GovText(content, governmentMode, 19, GovTeal,
                 0f, 0f, 620f, 34f, TextAnchor.MiddleLeft, FontStyle.Bold);
             GovText(content, "政策周期 " + government.cycle + "  ·  任期 " + Mathf.Min(10, government.history.Count) + "/10",
                 16, UiTheme.TextSub, 650f, 0f, 220f, 34f, TextAnchor.MiddleRight);
-            Button macroCenter = UiTheme.MakeButton(content, "宏观中心", () => { CloseTop(); ShowMacroDashboard(); }, 17);
+            Button macroCenter = UiTheme.MakeButton(content, "宏观中心", () =>
+            {
+                if (!MainlineGuide.CanEnter(GameState.I, PlayerViewMode.Macro))
+                {
+                    ShowToast(MainlineGuide.LockReason(PlayerViewMode.Macro));
+                    return;
+                }
+                CloseTop();
+                ShowMacroDashboard();
+            }, 17);
             PlaceTopLeft(macroCenter.rectTransform(), 882f, 0f, 150f, 36f);
             UiTheme.SetButtonStyle(macroCenter, GovTeal, UiTheme.Ink);
             bool reportPending = government.termReportReady && !government.termReportViewed;
@@ -505,10 +515,16 @@ namespace EconTown
             GovOutcomeBlock(groups, "主要受益者", impact.winners, 18f, 66f, UiTheme.Good);
             GovOutcomeBlock(groups, "主要承担者", impact.losers, 18f, 158f, UiTheme.Bad);
             RectTransform causes = GovCardPanel(content, "完整因果链", "政府作用也必须计入成本", 432f, 270f, 420f, 280f);
-            GovText(causes, impact.causalChain, 16, UiTheme.TextMain, 18f, 62f, 384f, 108f, TextAnchor.UpperLeft);
-            GovText(causes, "政府侧：" + impact.governmentEffect, 16, UiTheme.TextSub, 18f, 184f, 384f, 58f, TextAnchor.UpperLeft);
+            Text chain = GovText(causes, impact.causalChain, 16, UiTheme.TextMain, 18f, 62f, 384f, 108f, TextAnchor.UpperLeft);
+            float chainShift = ExpandTopText(chain);
+            if (chainShift > 1f)
+            {
+                causes.sizeDelta = new Vector2(causes.sizeDelta.x, causes.sizeDelta.y + chainShift);
+                GrowPanel(root, chainShift);
+            }
+            GovText(causes, "政府侧：" + impact.governmentEffect, 16, UiTheme.TextSub, 18f, 184f + chainShift, 384f, 58f, TextAnchor.UpperLeft);
             Button close = UiTheme.MakeButton(content, "继续观察城市数据", CloseTop, 19);
-            PlaceTopLeft(close.rectTransform(), 290f, 566f, 272f, 48f);
+            PlaceTopLeft(close.rectTransform(), 290f, 566f + chainShift, 272f, 48f);
             UiTheme.SetButtonStyle(close, GovTeal, Color.white);
         }
 
@@ -526,14 +542,16 @@ namespace EconTown
             GameObject root = BeginPanel("城市事件 · " + cityEvent.title, 760f, 560f);
             root.name = "panel_government_event";
             RectTransform content = ContentOf(root);
-            GovText(content, cityEvent.description, 21, UiTheme.TextMain, 24f, 22f, 664f, 86f, TextAnchor.MiddleCenter);
-            GovText(content, "没有单一正确答案。选择你愿意承担的代价。", 16, GovTeal, 24f, 112f, 664f, 30f, TextAnchor.MiddleCenter, FontStyle.Bold);
+            Text description = GovText(content, cityEvent.description, 21, UiTheme.TextMain, 24f, 22f, 664f, 86f, TextAnchor.MiddleCenter);
+            float descriptionShift = ExpandTopText(description);
+            GrowPanel(root, descriptionShift);
+            GovText(content, "没有单一正确答案。选择你愿意承担的代价。", 16, GovTeal, 24f, 112f + descriptionShift, 664f, 30f, TextAnchor.MiddleCenter, FontStyle.Bold);
             string[] options = { cityEvent.optionA, cityEvent.optionB, cityEvent.optionC };
             for (int i = 0; i < options.Length; i++)
             {
                 int choice = i;
                 Button option = UiTheme.MakeButton(content, options[i], () => ResolveGovernmentEvent(choice), 19);
-                PlaceTopLeft(option.rectTransform(), 74f, 166f + i * 86f, 564f, 64f);
+                PlaceTopLeft(option.rectTransform(), 74f, 166f + descriptionShift + i * 86f, 564f, 64f);
                 if (i == 1) UiTheme.SetButtonStyle(option, GovTeal, Color.white);
             }
         }

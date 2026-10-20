@@ -11,11 +11,14 @@ namespace EconTown
     /// <summary>玩家移动(WASD/方向键)与交互(E)。</summary>
     public class PlayerController : MonoBehaviour
     {
+        public static PlayerController I { get; private set; }
+
         public float speed = 4.2f;
         Rigidbody2D rb;
 
         void Awake()
         {
+            I = this;
             rb = gameObject.AddComponent<Rigidbody2D>();
             rb.gravityScale = 0f;
             rb.freezeRotation = true;
@@ -187,6 +190,11 @@ namespace EconTown
                 if (ConfirmPressed() && best.onUse != null) best.onUse();
             }
             else if (lastPrompt != null) { lastPrompt = null; UIManager.I.ShowPrompt(null); }
+        }
+
+        void OnDestroy()
+        {
+            if (I == this) I = null;
         }
     }
 }

@@ -18,7 +18,6 @@ namespace EconTown
         {
             GameState state = GameState.I;
             if (state == null) return;
-            SyncCurrentView(state, PlayerViewMode.Macro);
             MacroEconomySimulator.Ensure(state);
             selectedTab = Mathf.Clamp(selectedTab, 0, 5);
             MacroEconomyState m = state.macro;
@@ -30,7 +29,12 @@ namespace EconTown
             if (panelImage != null) panelImage.color = MacroNavy;
             RectTransform content = ContentOf(root);
 
-            MacroText(content, MacroChapterTitle(m.chapter), 18, MacroTeal, 0f, 0f, 470f, 32f, TextAnchor.MiddleLeft, FontStyle.Bold);
+            ChapterDefinition macroChapter = ProgressionService.Current(state);
+            string macroHeadline = macroChapter != null && macroChapter.part == LearningPart.Macro
+                ? "第 " + macroChapter.number + " 章 · " + macroChapter.title
+                : state.progression.mainlineComplete || state.progression.completedChapter >= 30
+                    ? "宏观经济 · 可以继续观察" : "宏观经济";
+            MacroText(content, macroHeadline, 18, MacroTeal, 0f, 0f, 470f, 32f, TextAnchor.MiddleLeft, FontStyle.Bold);
             MacroText(content, "第 " + m.period + " 期 · " + MacroEconomySimulator.CycleName(m.cyclePhase), 16,
                 UiTheme.TextSub, 480f, 0f, 260f, 32f, TextAnchor.MiddleCenter);
             Button news = UiTheme.MakeButton(content, "经济新闻", ShowMacroNews, 17);
@@ -395,19 +399,21 @@ namespace EconTown
             MacroPeriodRecord r = m.history[index];
             GameObject root = BeginPanel("第 " + r.period + " 期 · " + r.headline, 840f, 520f);
             RectTransform content = ContentOf(root);
-            MacroText(content, r.causalChain, 21, UiTheme.TextMain, 28f, 20f, 736f, 94f, TextAnchor.UpperLeft, FontStyle.Bold);
+            Text chain = MacroText(content, r.causalChain, 21, UiTheme.TextMain, 28f, 20f, 736f, 94f, TextAnchor.UpperLeft, FontStyle.Bold);
+            float chainShift = ExpandTopText(chain);
+            GrowPanel(root, chainShift);
             MacroText(content, "实际 GDP  ¥ " + r.realGdp.ToString("0") + "    增长 " + MacroSigned(r.gdpGrowth) + "%\n" +
                 "CPI " + r.cpi.ToString("0.0") + "    通胀 " + MacroSigned(r.inflation) + "%    失业 " + r.unemploymentRate.ToString("0.0") + "%\n" +
                 "消费 " + r.consumption.ToString("0") + "    投资 " + r.investment.ToString("0") + "    政府购买 " + r.governmentSpending.ToString("0") + "    净出口 " + MacroSignedMoney(r.netExports),
-                19, UiTheme.TextSub, 28f, 132f, 736f, 130f, TextAnchor.UpperLeft);
+                19, UiTheme.TextSub, 28f, 132f + chainShift, 736f, 130f, TextAnchor.UpperLeft);
             MacroText(content, "周期位置：" + MacroEconomySimulator.CycleName(r.cyclePhase) + "    产出缺口 " + MacroSigned(r.outputGap) + "%\n" +
                 "消费者信心 " + r.consumerConfidence.ToString("0") + "    企业信心 " + r.businessConfidence.ToString("0"),
-                19, MacroTeal, 28f, 282f, 736f, 80f, TextAnchor.UpperLeft);
+                19, MacroTeal, 28f, 282f + chainShift, 736f, 80f, TextAnchor.UpperLeft);
             string conceptId = r.shock == MacroShockType.EnergyCrisis ? "stagflation" :
                 r.shock == MacroShockType.AiRevolution ? "productivity" :
                 r.gdpGrowth < 0f ? "businesscycle" : "gdp";
             Button concept = UiTheme.MakeButton(content, "打开相关概念卡", () => ShowCardDetail(conceptId), 18);
-            MacroPlace(concept.rectTransform(), 276f, 386f, 288f, 46f);
+            MacroPlace(concept.rectTransform(), 276f, 386f + chainShift, 288f, 46f);
             UiTheme.SetButtonStyle(concept, MacroPaper, UiTheme.Ink);
         }
 

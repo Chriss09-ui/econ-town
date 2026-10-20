@@ -20,7 +20,6 @@ namespace EconTown
         {
             GameState s = GameState.I;
             if (s == null) return;
-            SyncCurrentView(s, PlayerViewMode.Resident);
             ResidentEconomy.Ensure(s);
             if (!s.resident.profileCreated) { ShowResidentProfile(); return; }
             if (s.resident.reportReady) { ShowResidentReport(); return; }
@@ -31,7 +30,12 @@ namespace EconTown
 
             ResidentText(c, r.residentName + "  ·  " + ResidentEconomy.ProfessionName(r.profession), 28,
                 UiTheme.TextMain, 8, 0, 680, 38, FontStyle.Bold);
-            ResidentText(c, ResidentEconomy.ChapterTitle(r.chapter), 16, ResidentTeal,
+            ChapterDefinition residentChapter = ProgressionService.Current(s);
+            string residentHeadline = residentChapter != null &&
+                (residentChapter.part == LearningPart.Resident || residentChapter.part == LearningPart.Housing)
+                ? "第 " + residentChapter.number + " 章 · " + residentChapter.title
+                : "镇民生活";
+            ResidentText(c, residentHeadline, 16, ResidentTeal,
                 8, 38, 700, 24, FontStyle.Bold);
             ResidentText(c, "偏好：" + ResidentEconomy.PreferenceName(r.preference), 16,
                 UiTheme.TextSub, 820, 8, 280, 28, FontStyle.Bold, TextAnchor.MiddleRight);
@@ -52,11 +56,22 @@ namespace EconTown
                 () => { CloseTop(); ShowResidentExperiments(); });
             ResidentNavButton(left, "查看需求与效用曲线", "曲线使用你自己的消费记录", 18, 230, 324, 70,
                 () => { CloseTop(); ShowConsumerLab(0); });
-            ResidentNavButton(left, "我的住房", "租房 · 房贷 · 月供压力", 366, 230, 324, 70,
-                () => { CloseTop(); ShowHousing(); });
-            // V0.9.5 第七张导航卡(全宽):储蓄三去向——存款/国债/镇景指数基金。
-            ResidentNavButton(left, "资产配置", "钱放在哪里：存款 · 国债 · 指数基金", 18, 308, 672, 54,
-                () => { CloseTop(); ShowAssetAllocation(); });
+            ResidentNavButton(left, "我的住房",
+                MainlineGuide.CanEnterHousing(s) ? "租房 · 房贷 · 月供压力" : "第 54 章再安家", 366, 230, 324, 70,
+                () =>
+                {
+                    if (!MainlineGuide.CanEnterHousing(s)) { ShowToast("第 54 章再安家"); return; }
+                    CloseTop();
+                    ShowHousing();
+                });
+            ResidentNavButton(left, "资产配置",
+                MainlineGuide.CanEnterAssets(s) ? "存款 · 国债 · 指数基金" : "第 58 章再安排储蓄去向", 18, 308, 672, 54,
+                () =>
+                {
+                    if (!MainlineGuide.CanEnterAssets(s)) { ShowToast("第 58 章再安排储蓄的去向"); return; }
+                    CloseTop();
+                    ShowAssetAllocation();
+                });
 
             string last = string.IsNullOrEmpty(r.lastChoiceReason)
                 ? "今天还没有选择。保留现金与时间，也是一种选择。"
@@ -99,7 +114,6 @@ namespace EconTown
         {
             GameState s = GameState.I;
             if (s == null) return;
-            SyncCurrentView(s, PlayerViewMode.Resident);
             ResidentEconomy.Ensure(s);
             FinancialSystemService.Ensure(s);
             HousingService.Ensure(s);
@@ -265,7 +279,6 @@ namespace EconTown
         {
             GameState s = GameState.I;
             if (s == null) return;
-            SyncCurrentView(s, PlayerViewMode.Resident);
             ResidentEconomy.Ensure(s);
             FinancialSystemService.Ensure(s);
             HousingService.Ensure(s);
@@ -401,16 +414,16 @@ namespace EconTown
             ResidentPreference preference = ResidentPreference.Foodie;
             GameObject root = BeginPanel("创建居民档案", 820, 690);
             RectTransform c = ContentOf(root);
-            ResidentText(c, "先认识你在小镇里的另一种身份", 28, UiTheme.TextMain,
+            ResidentText(c, "给镇上的自己起个名字", 28, UiTheme.TextMain,
                 20, 4, 730, 40, FontStyle.Bold, TextAnchor.MiddleCenter);
-            ResidentText(c, "这不会覆盖果汁店进度；两个视角共享同一个市场。", 16, UiTheme.TextSub,
+            ResidentText(c, "这是口袋里的另一本账，不会动果汁店的资金。", 16, UiTheme.TextSub,
                 20, 45, 730, 30, FontStyle.Normal, TextAnchor.MiddleCenter);
 
             ResidentText(c, "居民名字", 16, ResidentTeal, 40, 92, 180, 24, FontStyle.Bold);
             InputField nameInput = MakeResidentInput(c, "小经", 40, 122, 700, 52);
 
             ResidentText(c, "职业 · 决定每日基础收入", 16, ResidentTeal, 40, 200, 350, 24, FontStyle.Bold);
-            string[] professionLabels = { "便利店店员 · ¥60", "小镇配送员 · ¥70", "自由创作者 · ¥82" };
+            string[] professionLabels = { "市场帮工 · ¥60", "小镇配送员 · ¥70", "自由创作者 · ¥82" };
             Button[] professionButtons = new Button[3];
             for (int i = 0; i < professionButtons.Length; i++)
             {
@@ -459,8 +472,6 @@ namespace EconTown
             GameState s = GameState.I;
             if (s == null) return;
             ResidentEconomy.Ensure(s);
-            // 设置了 currentView 却不广播的话,HUD 要等下一次任意状态变化才刷新(P2-7)。
-            SyncCurrentView(s, PlayerViewMode.Resident);
             if (!s.resident.profileCreated) { ShowResidentProfile(); return; }
 
             string[] categories = { "食物", "饮料", "娱乐", "日用品" };
@@ -708,7 +719,6 @@ namespace EconTown
         public void ShowResidentExperiments()
         {
             GameState s = GameState.I;
-            SyncCurrentView(s, PlayerViewMode.Resident);
             ResidentEconomy.Ensure(s);
             GameObject root = BeginPanel("消费者实验 · 改变一个条件", 960, 720);
             RectTransform c = ContentOf(root);
@@ -753,7 +763,6 @@ namespace EconTown
         {
             GameState s = GameState.I;
             if (s == null) return;
-            SyncCurrentView(s, PlayerViewMode.Resident);
             ResidentEconomy.Ensure(s);
             consumerLabTab = Mathf.Clamp(tab, 0, 3);
             GameObject root = BeginPanel("消费者实验室 · 我的选择曲线", 1180, 880);

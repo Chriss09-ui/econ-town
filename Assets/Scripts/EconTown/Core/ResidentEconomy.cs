@@ -257,7 +257,7 @@ namespace EconTown
             {
                 case ResidentProfession.Courier: return "小镇配送员";
                 case ResidentProfession.Freelancer: return "自由创作者";
-                default: return "便利店店员";
+                default: return "市场帮工";
             }
         }
 

@@ -25,6 +25,8 @@ namespace EconTown
         Image eventChipBg;
         Image competitionHudBg;
         Image taskHudBg;
+        Button[] dockButtons;
+        RectTransform bottomDockRt;
         Image promptBg;
         Text competitionHudText;
         RectTransform toastRoot;
@@ -204,6 +206,7 @@ namespace EconTown
 
         void LateUpdate()
         {
+            RefreshMinimap();
             if (!dynamicFontRefreshPending || rebindingDynamicFont) return;
             dynamicFontRefreshPending = false;
             RebindDynamicFontTexts();
@@ -286,7 +289,7 @@ namespace EconTown
             moneyText.rectTransform.anchorMin = moneyText.rectTransform.anchorMax = new Vector2(1f, 0.5f);
             moneyText.rectTransform.pivot = new Vector2(1f, 0.5f);
             moneyText.rectTransform.anchoredPosition = new Vector2(-92f, 1f);
-            moneyText.rectTransform.sizeDelta = new Vector2(220f, 44f);
+            moneyText.rectTransform.sizeDelta = new Vector2(460f, 44f);
 
             Button settings = UiTheme.MakeButton(top.transform, "设置", ShowSettings, 16);
             settings.rectTransform().anchorMin = settings.rectTransform().anchorMax = new Vector2(1f, .5f);
@@ -315,8 +318,8 @@ namespace EconTown
             UiTheme.ApplyPixelFrame(taskHudBg);
             taskHudBg.rectTransform.anchorMin = taskHudBg.rectTransform.anchorMax = new Vector2(0f, 1f);
             taskHudBg.rectTransform.pivot = new Vector2(0f, .5f);
-            taskHudBg.rectTransform.anchoredPosition = new Vector2(18f, -86f);
-            taskHudBg.rectTransform.sizeDelta = new Vector2(402f, 64f);
+            taskHudBg.rectTransform.anchoredPosition = new Vector2(18f, -92f);
+            taskHudBg.rectTransform.sizeDelta = new Vector2(560f, 72f);
             Image taskTab = UiTheme.MakeImage(taskHudBg.transform, UiTheme.Accent, "taskTab");
             taskTab.rectTransform.anchorMin = new Vector2(0f, 0f);
             taskTab.rectTransform.anchorMax = new Vector2(0f, 1f);
@@ -350,23 +353,16 @@ namespace EconTown
             // 交互提示是一张短票据，只在有可交互对象时出现。
             promptBg = UiTheme.MakeImage(canvas, UiTheme.Panel, "interactionPromptBg");
             UiTheme.ApplyPixelFrame(promptBg);
-            promptBg.rectTransform.anchorMin = promptBg.rectTransform.anchorMax = new Vector2(.5f, 0f);
-            promptBg.rectTransform.anchoredPosition = new Vector2(0f, 98f);
-            promptBg.rectTransform.sizeDelta = new Vector2(560f, 38f);
             promptBg.gameObject.SetActive(false);
             promptText = UiTheme.MakeText(canvas, "", 19, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
             promptText.name = "interactionPrompt";
-            promptText.rectTransform.anchorMin = promptText.rectTransform.anchorMax = new Vector2(0.5f, 0f);
-            promptText.rectTransform.anchoredPosition = new Vector2(0f, 98f);
-            promptText.rectTransform.sizeDelta = new Vector2(530f, 34f);
 
             // V0.2 竞争状态条（第 16 天后出现）
             competitionHudBg = UiTheme.MakeImage(canvas, UiTheme.Market, "competitionHud");
             UiTheme.ApplyPixelFrame(competitionHudBg);
-            competitionHudBg.rectTransform.anchorMin = competitionHudBg.rectTransform.anchorMax = new Vector2(0f, 0f);
-            competitionHudBg.rectTransform.pivot = new Vector2(0f, .5f);
-            competitionHudBg.rectTransform.anchoredPosition = new Vector2(18f, 98f);
-            competitionHudBg.rectTransform.sizeDelta = new Vector2(430f, 36f);
+            competitionHudBg.rectTransform.anchorMin = new Vector2(0f, 0f);
+            competitionHudBg.rectTransform.anchorMax = new Vector2(1f, 0f);
+            competitionHudBg.rectTransform.pivot = new Vector2(0.5f, 0f);
             competitionHudText = UiTheme.MakeText(competitionHudBg.transform, "", 16, Color.white,
                 TextAnchor.MiddleCenter, FontStyle.Bold);
             competitionHudText.name = "competitionText";
@@ -378,33 +374,31 @@ namespace EconTown
             // 底部只保留九个高频口袋按钮；消费实验和设置分别回到居民页/顶栏。
             Image dock = UiTheme.MakeImage(canvas, UiTheme.BgDark, "bottomDock");
             UiTheme.ApplyPixelFrame(dock);
-            dock.rectTransform.anchorMin = dock.rectTransform.anchorMax = new Vector2(0.5f, 0f);
-            dock.rectTransform.pivot = new Vector2(0.5f, 0f);
-            dock.rectTransform.anchoredPosition = new Vector2(0, 14);
-            dock.rectTransform.sizeDelta = new Vector2(950f, 62f);
+            bottomDockRt = dock.rectTransform;
+            bottomDockRt.anchorMin = new Vector2(0f, 0f);
+            bottomDockRt.anchorMax = new Vector2(1f, 0f);
+            bottomDockRt.pivot = new Vector2(0.5f, 0f);
 
             string[] nav = { "任务", "店铺", "市场", "曲线", "生活", "市政", "宏观", "金融", "手册" };
-            System.Action[] acts = {
-                () => ShowProgression(),
-                () => { GameState.I.currentView = PlayerViewMode.Enterprise; GameState.I.Changed(); ShowShop(); },
-                () => { GameState.I.currentView = PlayerViewMode.Enterprise; GameState.I.Changed(); ShowMarketDashboard(); },
-                () => ShowCurves(0),
-                () => { GameState.I.currentView = PlayerViewMode.Resident; GameState.I.Changed(); ShowResidentHome(); },
-                () => { GameState.I.currentView = PlayerViewMode.Government; GameState.I.Changed(); ShowGovernmentDashboard(); },
-                () => { GameState.I.currentView = PlayerViewMode.Macro; GameState.I.Changed(); ShowMacroDashboard(); },
-                () => ShowFinanceCenter(),
-                () => ShowHandbook()
-            };
+            dockButtons = new Button[nav.Length];
+            float dockInner = 1280f - DockLeft - 12f;
+            float step = (dockInner - 20f) / nav.Length;
+            float buttonW = step - 8f;
+            float start = -dockInner * 0.5f + 10f + step * 0.5f;
             for (int i = 0; i < nav.Length; i++)
             {
                 int idx = i;
-                Button b = UiTheme.MakeButton(dock.transform, nav[i], () => acts[idx](), 16);
-                b.GetComponent<RectTransform>().anchorMin = b.GetComponent<RectTransform>().anchorMax = new Vector2(0.5f, 0);
-                b.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 0f);
-                b.GetComponent<RectTransform>().anchoredPosition = new Vector2(-400f + i * 100f, 10f);
-                b.GetComponent<RectTransform>().sizeDelta = new Vector2(92f, 42f);
-                UiTheme.SetButtonStyle(b, i == 1 ? UiTheme.Accent : UiTheme.Paper, UiTheme.Ink);
+                Button b = UiTheme.MakeButton(dock.transform, nav[i], () => OpenDock(idx), 16);
+                RectTransform br = b.GetComponent<RectTransform>();
+                br.anchorMin = br.anchorMax = new Vector2(0.5f, 0f);
+                br.pivot = new Vector2(0.5f, 0f);
+                br.anchoredPosition = new Vector2(start + i * step, 8f);
+                br.sizeDelta = new Vector2(buttonW, 42f);
+                UiTheme.SetButtonStyle(b, UiTheme.Paper, UiTheme.Ink);
+                dockButtons[i] = b;
             }
+
+            BuildMinimap(canvas);
 
             // Toast 容器
             GameObject tr = new GameObject("toasts", typeof(RectTransform), typeof(RectMask2D));
@@ -477,6 +471,33 @@ namespace EconTown
             cutsceneLayer.gameObject.SetActive(false);
         }
 
+        void LayoutBottomChrome()
+        {
+            float left = DockLeft;
+            float bottom = DockBottom;
+            if (bottomDockRt != null)
+            {
+                bottomDockRt.offsetMin = new Vector2(left, bottom);
+                bottomDockRt.offsetMax = new Vector2(-12f, bottom + DockHeight);
+            }
+            bool share = competitionHudBg != null && competitionHudBg.gameObject.activeSelf;
+            float row = bottom + DockHeight + ColumnGap;
+            PlaceBottomSpan(competitionHudBg != null ? competitionHudBg.rectTransform : null, left, row, 34f);
+            float promptY = share ? row + 34f + ColumnGap : row;
+            PlaceBottomSpan(promptBg != null ? promptBg.rectTransform : null, left, promptY, 36f);
+            PlaceBottomSpan(promptText != null ? promptText.rectTransform : null, left + 16f, promptY + 2f, 32f, -28f);
+        }
+
+        static void PlaceBottomSpan(RectTransform rt, float left, float y, float height, float right = -16f)
+        {
+            if (rt == null) return;
+            rt.anchorMin = new Vector2(0f, 0f);
+            rt.anchorMax = new Vector2(1f, 0f);
+            rt.pivot = new Vector2(0.5f, 0f);
+            rt.offsetMin = new Vector2(left, y);
+            rt.offsetMax = new Vector2(right, y + height);
+        }
+
         void RefreshHud()
         {
             GameState s = GameState.I;
@@ -485,7 +506,6 @@ namespace EconTown
             GovernmentSimulator.Ensure(s);
             bool residentView = s.currentView == PlayerViewMode.Resident && s.resident.profileCreated;
             bool governmentView = s.currentView == PlayerViewMode.Government;
-            bool macroView = s.currentView == PlayerViewMode.Macro;
             bool bankView = s.currentView == PlayerViewMode.Bank;
             bool centralBankView = s.currentView == PlayerViewMode.CentralBank;
             MacroEconomySimulator.Ensure(s);
@@ -493,25 +513,27 @@ namespace EconTown
             ProgressionService.Ensure(s);
             if (dayText != null)
             {
-                string viewpoint = centralBankView ? "央行视角" : bankView ? "银行视角" : macroView ? "宏观视角" :
-                    governmentView ? "政府视角" : residentView ? "居民视角" : "企业视角";
-                // V0.7.1(PRD §122):追加「· 第Y年·{季}」——纯 WorldDay 派生、零新状态
                 int day = Mathf.Max(1, s.day);
                 int year = (day - 1) / 52 + 1;
                 dayText.text = "Day " + s.day + " · 第" + year + "年·" +
-                    AtmosphereService.SeasonName(AtmosphereService.SeasonIndex(day)) + " · " + viewpoint;
+                    AtmosphereService.SeasonName(AtmosphereService.SeasonIndex(day)) + " · " + MainlineGuide.RoleName(s);
             }
+            MainlineGuide.Cue mainlineCue = MainlineGuide.Build(s);
             if (taskHudBg != null && taskHudText != null)
             {
                 ChapterDefinition chapter = ProgressionService.Current(s);
                 string modePrefix = ChapterPlayService.IsChapterPlay ? "篇章游玩 · " : "";
                 taskHudText.text = chapter == null
-                    ? "<color=#D8A84E>" + modePrefix + "自由经济时代</color>\n当前目标：自行经营、挑战或创建实验"
-                    : "<color=#D8A84E>" + modePrefix + ProgressionService.PartTitle(chapter.part) + " · Chapter " + chapter.number + "</color>\n当前任务：" + chapter.task;
+                    ? "<color=#D8A84E>" + modePrefix + "自由经济时代</color>\n" + mainlineCue.line
+                    : "<color=#D8A84E>" + modePrefix + "第 " + chapter.number + " 章 · " + chapter.title + "</color>\n现在：" + mainlineCue.line;
             }
-            if (moneyText != null) moneyText.text = centralBankView ? "政策利率  " + s.centralBank.policyRate.ToString("0.00") + "%" :
-                bankView ? "银行资本  " + s.bank.equity.ToString("0") : macroView ? "实际 GDP  " + s.macro.realGdp.ToString("0") : governmentView ? "政府资金  " + s.government.cash.ToString("0") :
-                residentView ? "现金  " + s.resident.cash.ToString("0") : "资金  " + s.money.ToString("0");
+            ApplyDockSpotlight(mainlineCue);
+            if (moneyText != null)
+            {
+                string pocket = s.resident != null && s.resident.profileCreated
+                    ? "  ·  口袋 ¥" + s.resident.cash.ToString("0") : "";
+                moneyText.text = "店里 ¥" + s.money.ToString("0") + pocket;
+            }
             if (eventChipBg != null)
             {
                 bool hasTownEvent = !string.IsNullOrEmpty(s.todayEventName);
@@ -534,7 +556,7 @@ namespace EconTown
                 {
                     // 围猎三#3:-0.x% 四舍五入到 0 时 ToString("0") 仍带负号,先取整再按整数值判号。
                     int demandPct = Mathf.RoundToInt(s.ResidentDemandChangePercent);
-                    competitionHudText.text = "居民视角   ·   自由时间 " + s.resident.freeHours.ToString("0.##") + "h   ·   效用 " + s.resident.dailyUtility.ToString("0.0") +
+                    competitionHudText.text = "镇民   ·   自由时间 " + s.resident.freeHours.ToString("0.##") + "h   ·   效用 " + s.resident.dailyUtility.ToString("0.0") +
                         "   ·   果汁需求 " + (demandPct >= 0 ? "+" : "") + demandPct + "%";
                 }
                 else if (s.CompetitionActive)
@@ -545,42 +567,10 @@ namespace EconTown
                         "   ·   Sunny Tea ¥" + s.competitor.price.ToString("0");
                 }
             }
-            if (competitionHudBg != null)
-                competitionHudBg.rectTransform.anchoredPosition = new Vector2(18f, 98f);
+            LayoutBottomChrome();
             if (hintText != null)
             {
-                if (centralBankView)
-                {
-                    hintText.text = "央行：" + InterestRateService.TransmissionStageText(s);
-                }
-                else if (bankView)
-                {
-                    hintText.text = "银行：" + FinancialSystemService.StabilityLabel(s) + " · 准备金率 " +
-                        (s.bank.ActualReserveRatio * 100f).ToString("0.0") + "%";
-                }
-                else if (macroView)
-                {
-                    hintText.text = "宏观经济：" + MacroEconomySimulator.CycleName(s.macro.cyclePhase) + " · 通胀 " +
-                        s.macro.inflation.ToString("0.0") + "% · 失业 " + s.macro.unemploymentRate.ToString("0.0") + "%";
-                }
-                else if (governmentView)
-                {
-                    hintText.text = GovernmentSimulator.ChapterTitle(s.government.chapter) + " · 支持率 " +
-                        s.government.approvalRating.ToString("0") + "%";
-                }
-                else if (residentView)
-                {
-                    hintText.text = "居民模式：安排消费、工作、闲暇与储蓄";
-                }
-                else switch (s.phase)
-                {
-                    case GamePhase.Morning:
-                        hintText.text = "清晨 · 定价、备货、安排店务后开店";
-                        break;
-                    case GamePhase.Business: hintText.text = "营业中：顾客陆续到店"; break;
-                    case GamePhase.Report: hintText.text = "营业结束：查看今日报告"; break;
-                    case GamePhase.Ended: hintText.text = "本局已结束"; break;
-                }
+                hintText.text = MainlineGuide.RoleSentence(s);
                 if (phaseHintBg != null) phaseHintBg.gameObject.SetActive(!string.IsNullOrEmpty(hintText.text));
             }
         }
@@ -612,6 +602,64 @@ namespace EconTown
             // 注意:不要在这里置位 dynamicFontRefreshPending——那会令每次开面板都全树重绑字体
             // 并强制刷新 Canvas 两遍。真正的触发时机是 OnFontTextureRebuilt(动态字体系扩充图集后)。
             return root;
+        }
+
+        /// <summary>正文比按钮上方的空位更高时，把面板加高，避免最后一行叠到按钮上。
+        /// 调用前正文底边必须已经让开底栏按钮：加高拉伸区域时，按钮若锚在底部会留在原处。</summary>
+        protected void FitTextAboveFooter(Text text)
+        {
+            if (text == null) return;
+            RectTransform rect = text.rectTransform;
+            float needed = MeasuredTextHeight(text);
+            if (needed < 8f || rect.rect.width < 8f) return;
+            float extra = needed + 8f - rect.rect.height;
+            if (extra <= 1f) return;
+            RectTransform content = rect.parent as RectTransform;
+            GameObject panel = content != null && content.parent != null ? content.parent.gameObject : null;
+            GrowPanel(panel, extra);
+        }
+
+        /// <summary>顶对齐的固定高度正文若比框更高，把框加高，返回下方控件需要下移的像素。</summary>
+        protected float ExpandTopText(Text text)
+        {
+            if (text == null) return 0f;
+            RectTransform rect = text.rectTransform;
+            float needed = MeasuredTextHeight(text);
+            float box = rect.rect.height > 8f ? rect.rect.height : rect.sizeDelta.y;
+            if (needed < 8f || box < 8f) return 0f;
+            float extra = needed + 8f - box;
+            if (extra <= 1f) return 0f;
+            rect.sizeDelta = new Vector2(rect.sizeDelta.x, rect.sizeDelta.y + extra);
+            return extra;
+        }
+
+        protected void GrowPanel(GameObject root, float extra)
+        {
+            if (root == null || extra <= 1f) return;
+            UiPanelViewportFitter fitter = root.GetComponent<UiPanelViewportFitter>();
+            RectTransform panel = root.GetComponent<RectTransform>();
+            if (fitter == null && root.transform.parent != null)
+            {
+                fitter = root.transform.parent.GetComponent<UiPanelViewportFitter>();
+                panel = root.transform.parent.GetComponent<RectTransform>();
+            }
+            if (panel == null) return;
+            Vector2 size = panel.sizeDelta + new Vector2(0f, extra);
+            panel.sizeDelta = size;
+            if (fitter != null) fitter.Configure(size.x, size.y);
+        }
+
+        protected float MeasuredTextHeight(Text text)
+        {
+            if (text == null) return 0f;
+            Canvas.ForceUpdateCanvases();
+            CrispTextMirror mirror = text.GetComponent<CrispTextMirror>();
+            if (mirror != null)
+            {
+                float visible = mirror.VisiblePreferredHeight();
+                if (visible > 1f) return visible;
+            }
+            return text.preferredHeight;
         }
 
         static bool IsRenderablePanel(GameObject panel)
@@ -659,17 +707,6 @@ namespace EconTown
         protected RectTransform ContentOf(GameObject root)
         {
             return root.transform.Find("content") as RectTransform;
-        }
-
-        /// <summary>
-        /// 面板入口同步当前视角并广播:currentView 决定 HUD 视角标签/资金栏、NPC 政府台词分支与
-        /// 店门分流,此前只有 dock 导航会写——从家门/餐厅/市政厅等世界入口进面板后 HUD 与界面脱节(P2-7)。
-        /// </summary>
-        protected static void SyncCurrentView(GameState s, PlayerViewMode view)
-        {
-            if (s == null || s.currentView == view) return;
-            s.currentView = view;
-            s.Changed();
         }
 
         public void CloseTop()
@@ -974,20 +1011,21 @@ namespace EconTown
         public void ShowConfirmation(string title, string message, System.Action confirmed,
             string confirmLabel = "确认删除并重新开始")
         {
-            GameObject root = BeginPanel(title, 560, 340);
+            GameObject root = BeginPanel(title, 640, 360);
             RectTransform content = ContentOf(root);
             Text body = UiTheme.MakeText(content, message, 21, UiTheme.TextMain, TextAnchor.MiddleCenter);
-            body.rectTransform.anchorMin = body.rectTransform.anchorMax = new Vector2(.5f, 1f);
-            body.rectTransform.pivot = new Vector2(.5f, 1f);
-            body.rectTransform.anchoredPosition = new Vector2(0f, -18f);
-            body.rectTransform.sizeDelta = new Vector2(480f, 150f);
+            body.rectTransform.anchorMin = Vector2.zero;
+            body.rectTransform.anchorMax = Vector2.one;
+            body.rectTransform.offsetMin = new Vector2(28f, 84f);
+            body.rectTransform.offsetMax = new Vector2(-28f, -12f);
             body.verticalOverflow = VerticalWrapMode.Overflow;
+            FitTextAboveFooter(body);
 
             Button cancel = UiTheme.MakeButton(content, "取消", CloseTop, 20);
             cancel.rectTransform().anchorMin = cancel.rectTransform().anchorMax = new Vector2(0f, 0f);
             cancel.rectTransform().pivot = new Vector2(0f, 0f);
-            cancel.rectTransform().anchoredPosition = new Vector2(62f, 16f);
-            cancel.rectTransform().sizeDelta = new Vector2(190f, 52f);
+            cancel.rectTransform().anchoredPosition = new Vector2(36f, 16f);
+            cancel.rectTransform().sizeDelta = new Vector2(250f, 52f);
 
             Button confirm = UiTheme.MakeButton(content, confirmLabel, () =>
             {
@@ -996,8 +1034,8 @@ namespace EconTown
             }, 18);
             confirm.rectTransform().anchorMin = confirm.rectTransform().anchorMax = new Vector2(1f, 0f);
             confirm.rectTransform().pivot = new Vector2(1f, 0f);
-            confirm.rectTransform().anchoredPosition = new Vector2(-62f, 16f);
-            confirm.rectTransform().sizeDelta = new Vector2(230f, 52f);
+            confirm.rectTransform().anchoredPosition = new Vector2(-36f, 16f);
+            confirm.rectTransform().sizeDelta = new Vector2(250f, 52f);
             UiTheme.SetButtonStyle(confirm, UiTheme.Bad, Color.white);
         }
     }

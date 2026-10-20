@@ -320,7 +320,8 @@ namespace EconTown
             Assert.AreEqual(4, state.employees);
             Assert.AreEqual(456, state.materials);
             Assert.AreEqual(37, state.inventory);
-            Assert.AreEqual(PlayerViewMode.Government, state.currentView);
+            Assert.AreEqual(PlayerViewMode.Enterprise, state.currentView,
+                "身份跟当前篇章走。第 1 章读档时，把越级写成镇长的视角收回店主。");
             Assert.AreEqual("校园放假", state.todayEventName);
             Assert.AreEqual("对手促销", state.todayCompetitionEventName);
             Assert.IsTrue(state.unlockedCards.Contains("elasticity"));

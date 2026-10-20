@@ -167,9 +167,15 @@ namespace EconTown
             string metrics = ChallengeMetrics(run);
             Image status = UiTheme.MakeImage(c, new Color32(0x32, 0x2c, 0x28, 255), "challengeStatus");
             PlaceTopLeft(status.rectTransform, 8f, 52f, 856f, 226f);
-            ShopText(status.rectTransform, def.premise + "\n\n" + metrics + "\n\n" +
+            Text statusText = ShopText(status.rectTransform, def.premise + "\n\n" + metrics + "\n\n" +
                 (string.IsNullOrEmpty(run.lastSummary) ? "选择一种经济行动，运行下一轮。" : run.lastSummary),
                 18, UiTheme.TextMain, 20f, 14f, 816f, 196f, TextAnchor.UpperLeft);
+            float statusShift = ExpandTopText(statusText);
+            if (statusShift > 1f)
+            {
+                status.rectTransform.sizeDelta = new Vector2(856f, 226f + statusShift);
+                GrowPanel(root, statusShift);
+            }
 
             if (run.active)
             {
@@ -183,13 +189,13 @@ namespace EconTown
                         ClosePanel(root);
                         ShowChallengeRun();
                     }, 18);
-                    PlaceTopLeft(action.rectTransform(), 38f + i * 280f, 310f, 256f, 58f);
+                    PlaceTopLeft(action.rectTransform(), 38f + i * 280f, 310f + statusShift, 256f, 58f);
                 }
             }
             else
             {
                 ShopText(c, run.completed ? "挑战完成 · 你找到了可持续的恢复路径" : "挑战结束 · 失败不会损坏主存档，可以立即重试",
-                    21, run.completed ? UiTheme.Good : UiTheme.Bad, 80f, 320f, 704f, 54f, TextAnchor.MiddleCenter, FontStyle.Bold);
+                    21, run.completed ? UiTheme.Good : UiTheme.Bad, 80f, 320f + statusShift, 704f, 54f, TextAnchor.MiddleCenter, FontStyle.Bold);
             }
 
             Button retry = UiTheme.MakeButton(c, "重新开始", () =>
@@ -198,14 +204,14 @@ namespace EconTown
                 SaveSystem.SaveKeyMoment(s, "挑战重新开始");
                 ClosePanel(root); ShowChallengeRun();
             }, 18);
-            PlaceTopLeft(retry.rectTransform(), 206f, 440f, 200f, 50f);
+            PlaceTopLeft(retry.rectTransform(), 206f, 440f + statusShift, 200f, 50f);
             Button back = UiTheme.MakeButton(c, "返回挑战列表", () =>
             {
                 if (s.sandbox.activeChallenge != null) s.sandbox.activeChallenge.active = false;
                 SaveSystem.SaveKeyMoment(s, "退出挑战");
                 ClosePanel(root); ShowChallenges();
             }, 18);
-            PlaceTopLeft(back.rectTransform(), 450f, 440f, 200f, 50f);
+            PlaceTopLeft(back.rectTransform(), 450f, 440f + statusShift, 200f, 50f);
         }
 
         static string ChallengeMetrics(ChallengeRunState run)

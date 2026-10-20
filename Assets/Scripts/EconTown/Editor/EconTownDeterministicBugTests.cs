@@ -484,37 +484,27 @@ namespace EconTown
         }
 
         [Test]
-        public void PerspectivePanelsSynchronizeCurrentViewAndBroadcast()
+        public void PanelsDoNotChangeStoryRole()
         {
-            // P2-7 回归:各视角面板入口必须同步 currentView 并广播 Changed()——
-            // 否则 HUD 视角标签/资金栏、NPC 政府台词分支、店门分流全部停留在旧视角。
+            // 身份只跟篇章走。打开生活/市政/宏观/店铺不能把人从店主改成镇民。
             DeterministicBugTestUIManager ui = CreateTestUi();
-            state.currentView = PlayerViewMode.Enterprise;
-            int changed = 0;
-            state.OnStateChanged += CountChange;
-            try
-            {
-                ui.ShowResidentHome();
-                Assert.AreEqual(PlayerViewMode.Resident, state.currentView, "居民面板入口必须同步视角。");
-                Assert.GreaterOrEqual(changed, 1, "视角切换必须广播 Changed(),HUD 不能等下一次任意状态变化才刷新。");
+            ProgressionService.Ensure(state);
+            state.currentView = PlayerViewMode.Resident;
+            ProgressionService.Ensure(state);
+            Assert.AreEqual(PlayerViewMode.Enterprise, state.currentView, "第 1 章必须是店主，即使之前被写成镇民。");
 
-                changed = 0;
-                ui.ShowGovernmentDashboard(0);
-                Assert.AreEqual(PlayerViewMode.Government, state.currentView, "市政厅面板入口必须同步视角。");
-                Assert.GreaterOrEqual(changed, 1);
+            ui.ShowResidentHome();
+            ui.ShowGovernmentDashboard(0);
+            ui.ShowMacroDashboard(0);
+            ui.ShowShop();
+            Assert.AreEqual(PlayerViewMode.Enterprise, state.currentView, "面板不得改写身份。");
 
-                changed = 0;
-                ui.ShowMacroDashboard(0);
-                Assert.AreEqual(PlayerViewMode.Macro, state.currentView, "宏观面板入口必须同步视角。");
-                Assert.GreaterOrEqual(changed, 1);
-
-                changed = 0;
-                ui.ShowShop();
-                Assert.AreEqual(PlayerViewMode.Enterprise, state.currentView, "商店面板入口必须同步视角。");
-                Assert.GreaterOrEqual(changed, 1);
-            }
-            finally { state.OnStateChanged -= CountChange; }
-            void CountChange() { changed++; }
+            state.progression.currentChapter = 17;
+            state.progression.completedChapter = 16;
+            ProgressionService.Ensure(state);
+            Assert.AreEqual(PlayerViewMode.Government, state.currentView, "第 17 章身份是镇长。");
+            ui.ShowShop();
+            Assert.AreEqual(PlayerViewMode.Government, state.currentView, "回店里看经营，人仍然是镇长。");
         }
 
         [Test]

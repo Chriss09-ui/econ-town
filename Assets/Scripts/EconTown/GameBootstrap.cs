@@ -102,6 +102,7 @@ namespace EconTown
                 if (startup.loadedState || startup.startedPart) UIManager.I.PostLoadRefresh(s);
                 if (startup.startedPart && startup.part != null)
                     UIManager.I.ShowChapterPlayIntro(startup.part);
+                else UIManager.I.TryShowMorningMainline(s);
                 if (!string.IsNullOrEmpty(startup.message)) UIManager.I.ShowToast(startup.message);
             }
         }
@@ -145,35 +146,35 @@ namespace EconTown
             });
             Interactables.Register("查看广场公告", MapBuilder.PlazaCenter, () => UIManager.I.ShowPlaza());
             Interactables.Register("回到我的家", MapBuilder.HomeDoor,
-                () => ShopInteriorController.EnterInterior("home"));         // V0.9.12:进店,书桌在店内
+                () => EnterRoleBuilding(PlayerViewMode.Resident, "home"));
             Interactables.Register("进入暖炉餐厅", MapBuilder.RestaurantDoor,
-                () => ShopInteriorController.EnterInterior("restaurant"));   // V0.9.11:进店,点餐台在店内
+                () => EnterRoleBuilding(PlayerViewMode.Resident, "restaurant"));
             Interactables.Register("进入星光电影院", MapBuilder.CinemaDoor,
-                () => ShopInteriorController.EnterInterior("cinema"));       // V0.9.11:进店,售票亭在店内
+                () => EnterRoleBuilding(PlayerViewMode.Resident, "cinema"));
             Interactables.Register("进入便利屋", MapBuilder.ConvenienceDoor,
-                () => ShopInteriorController.EnterInterior("convenience"));  // V0.9.12:进店,收银台在店内
+                () => EnterRoleBuilding(PlayerViewMode.Resident, "convenience"));
             // V0.9.12 装饰铺转正:零嘴亭/花店门口可进店(店内交互点是纯氛围文案,零经济改动)
             Interactables.Register("进入零嘴亭", MapBuilder.DecorADoor,
                 () => ShopInteriorController.EnterInterior("decor_a"));
             Interactables.Register("进入花店", MapBuilder.DecorBDoor,
                 () => ShopInteriorController.EnterInterior("decor_b"));
             Interactables.Register("进入小镇银行", MapBuilder.BankDoor,
-                () => ShopInteriorController.EnterInterior("bank"));        // V0.9.13:进店,柜台在店内
+                () => EnterRoleBuilding(PlayerViewMode.Bank, "bank"));
             Interactables.Register("进入中央银行", MapBuilder.CentralBankDoor,
-                () => ShopInteriorController.EnterInterior("centralbank")); // V0.9.13:进店;未解锁门随面板在店内利率台
+                () => EnterRoleBuilding(PlayerViewMode.CentralBank, "centralbank"));
             Interactables.Register("乘接驳车前往国际贸易港", MapBuilder.PortDoor,
-                PortSceneController.EnterPort, WorldArea.Town);
+                OpenPortIfReady, WorldArea.Town);
             Interactables.Register("返回经济小镇", MapBuilder.PortExitDoor,
                 PortSceneController.ExitPort, WorldArea.Port);
             Interactables.Register("查看报关行黑板", MapBuilder.CustomsDoor,
                 () => UIManager.I.ShowCustomsBoard(), WorldArea.Port);
             Interactables.Register("进入市政厅", MapBuilder.HallDoor,
-                () => ShopInteriorController.EnterInterior("hall"));        // V0.9.13:进店,政务台在店内
+                () => EnterRoleBuilding(PlayerViewMode.Government, "hall"));
             // label 随转正从「查看河畔工厂」改「进入河畔工厂」(原直开环境治理分页)
             Interactables.Register("进入河畔工厂", MapBuilder.FactoryDoor,
-                () => ShopInteriorController.EnterInterior("factory"));
+                () => EnterRoleBuilding(PlayerViewMode.Government, "factory"));
             Interactables.Register("进入职业培训中心", MapBuilder.TrainingDoor,
-                () => ShopInteriorController.EnterInterior("training"));    // V0.9.13:进店,讲台在店内
+                () => EnterRoleBuilding(PlayerViewMode.Government, "training"));
             RegisterDistrictInteractables();
         }
 
@@ -234,24 +235,53 @@ namespace EconTown
                 case "bookstore": ShopInteriorController.EnterInterior("bookstore"); break;     // V0.9.12 装饰铺转正
                 case "decor_a": ShopInteriorController.EnterInterior("decor_a"); break;        // V0.9.12 装饰铺转正
                 case "decor_b": ShopInteriorController.EnterInterior("decor_b"); break;        // V0.9.12 装饰铺转正
-                case "bank": ShopInteriorController.EnterInterior("bank"); break;              // V0.9.13:点击=进店
-                case "centralbank": ShopInteriorController.EnterInterior("centralbank"); break; // V0.9.13:进店;未解锁门在店内面板
-                case "port": PortSceneController.EnterPort(); break;
-                case "hall": ShopInteriorController.EnterInterior("hall"); break;              // V0.9.13:点击=进店
-                case "factory": ShopInteriorController.EnterInterior("factory"); break;        // V0.9.13:点击=进店
-                case "training": ShopInteriorController.EnterInterior("training"); break;      // V0.9.13:点击=进店
-                case "home": ShopInteriorController.EnterInterior("home"); break;   // V0.9.12:点击=进店,书桌在店内
-                case "restaurant": ShopInteriorController.EnterInterior("restaurant"); break;   // V0.9.11:点击=进店
-                case "cinema": ShopInteriorController.EnterInterior("cinema"); break;
-                case "convenience": ShopInteriorController.EnterInterior("convenience"); break; // V0.9.12:点击=进店,收银台在店内
+                case "bank": EnterRoleBuilding(PlayerViewMode.Bank, "bank"); break;
+                case "centralbank": EnterRoleBuilding(PlayerViewMode.CentralBank, "centralbank"); break;
+                case "port": OpenPortIfReady(); break;
+                case "hall": EnterRoleBuilding(PlayerViewMode.Government, "hall"); break;
+                case "factory": EnterRoleBuilding(PlayerViewMode.Government, "factory"); break;
+                case "training": EnterRoleBuilding(PlayerViewMode.Government, "training"); break;
+                case "home": EnterRoleBuilding(PlayerViewMode.Resident, "home"); break;
+                case "restaurant": EnterRoleBuilding(PlayerViewMode.Resident, "restaurant"); break;
+                case "cinema": EnterRoleBuilding(PlayerViewMode.Resident, "cinema"); break;
+                case "convenience": EnterRoleBuilding(PlayerViewMode.Resident, "convenience"); break;
             }
         }
 
-        /// <summary>店内收银台:营业面板的门内入口(门口进店前的那条视角分流原样搬进来)。</summary>
+        /// <summary>店内收银台永远是店主的经营面板。镇民买东西走餐厅、影院和便利屋。</summary>
         static void OpenShopPanel()
         {
-            if (GameState.I.currentView == PlayerViewMode.Resident) UIManager.I.ShowResidentCommerce("饮料");
-            else UIManager.I.ShowShop();
+            UIManager.I.ShowShop();
+        }
+
+        static void EnterRoleBuilding(PlayerViewMode role, string kind)
+        {
+            if (!MainlineGuide.CanEnter(GameState.I, role))
+            {
+                if (UIManager.I != null) UIManager.I.ShowToast(MainlineGuide.LockReason(role));
+                return;
+            }
+            ShopInteriorController.EnterInterior(kind);
+        }
+
+        static void OpenPortIfReady()
+        {
+            if (!MainlineGuide.CanEnterTrade(GameState.I))
+            {
+                if (UIManager.I != null) UIManager.I.ShowToast(MainlineGuide.TradeLockReason());
+                return;
+            }
+            PortSceneController.EnterPort();
+        }
+
+        static void OpenRoleCounter(PlayerViewMode role, System.Action open)
+        {
+            if (!MainlineGuide.CanEnter(GameState.I, role))
+            {
+                if (UIManager.I != null) UIManager.I.ShowToast(MainlineGuide.LockReason(role));
+                return;
+            }
+            if (open != null) open();
         }
 
         /// <summary>V0.9.11 店内面板交互点的回调接线(行为留 Bootstrap,InteriorCatalog 只放数据):
@@ -264,46 +294,32 @@ namespace EconTown
         {
             switch (kind)
             {
-                case "restaurant": return () => UIManager.I.ShowResidentCommerce("食物");
-                case "cinema": return () => UIManager.I.ShowResidentCommerce("娱乐");
+                case "restaurant": return () => OpenRoleCounter(PlayerViewMode.Resident, () => UIManager.I.ShowResidentCommerce("食物"));
+                case "cinema": return () => OpenRoleCounter(PlayerViewMode.Resident, () => UIManager.I.ShowResidentCommerce("娱乐"));
                 case "market": return () => UIManager.I.ShowMarket();
                 case "competitor": return () => UIManager.I.ShowCompetitorShop();
-                case "home": return () => UIManager.I.ShowResidentHome();
-                case "convenience": return () => UIManager.I.ShowResidentCommerce("日用品");
+                case "home": return () => OpenRoleCounter(PlayerViewMode.Resident, () => UIManager.I.ShowResidentHome());
+                case "convenience": return () => OpenRoleCounter(PlayerViewMode.Resident, () => UIManager.I.ShowResidentCommerce("日用品"));
                 case "bookstore": return () => UIManager.I.ShowToast("随手翻了几页——这周新到的散文集，墨香还没散");
                 case "decor_b": return () => UIManager.I.ShowToast("挑了一束洋甘菊——店家说今天买花的人特别多");
                 case "decor_a": return () => UIManager.I.ShowToast("从窗口买了一包跳跳糖——老板多送了一颗话梅");
-                case "bank": return OpenBank;                                  // 方法组:cc 分页分流在面板内
-                case "centralbank": return OpenCentralBank;                    // 方法组:unlocked 门在面板内
-                case "hall": return () => UIManager.I.ShowGovernmentDashboard();
-                case "training": return () => UIManager.I.ShowGovernmentDashboard(2);
-                case "factory": return () => UIManager.I.ShowGovernmentDashboard(4);
+                case "bank": return OpenBank;                                  // 方法组:身份门在 OpenBank 内
+                case "centralbank": return OpenCentralBank;                    // 方法组:身份门在 OpenCentralBank 内
+                case "hall": return () => OpenRoleCounter(PlayerViewMode.Government, () => UIManager.I.ShowGovernmentDashboard());
+                case "training": return () => OpenRoleCounter(PlayerViewMode.Government, () => UIManager.I.ShowGovernmentDashboard(2));
+                case "factory": return () => OpenRoleCounter(PlayerViewMode.Government, () => UIManager.I.ShowGovernmentDashboard(4));
                 default: return OpenShopPanel;
             }
         }
 
         static void OpenBank()
         {
-            GameState state = GameState.I;
-            ProgressionService.Ensure(state);
-            if (state.progression.completedChapter < 31)
-            {
-                UIManager.I.ShowFinanceCenter();
-                return;
-            }
-            UIManager.I.ShowFinanceCenter(0);
+            OpenRoleCounter(PlayerViewMode.Bank, () => UIManager.I.ShowFinanceCenter(0));
         }
 
         static void OpenCentralBank()
         {
-            GameState state = GameState.I;
-            FinancialSystemService.Ensure(state);
-            if (!state.centralBank.unlocked)
-            {
-                UIManager.I.ShowToast("完成银行与利率基础章节后，中央银行将开放。");
-                return;
-            }
-            UIManager.I.ShowFinanceCenter(3);
+            OpenRoleCounter(PlayerViewMode.CentralBank, () => UIManager.I.ShowFinanceCenter(3));
         }
 
         /// <summary>报告关闭后进入下一天。</summary>
@@ -395,15 +411,19 @@ namespace EconTown
                     s.experience.todayLongTermEvent.effect);
 
             ChapterDefinition currentChapter = ProgressionService.Current(s);
+            bool morningTaken = false;
             if (currentChapter != null && currentChapter.number == 6 &&
                 !ProgressionService.HasSignal(s, ProgressSignals.CompetitorOpened))
                 // V0.7.4 过场 1:第 6 章清晨,Sunny Tea 开业介绍弹窗之前(§148-1)
-                CutsceneDirector.TryPlay(s, (int)CutsceneId.SunnyTeaOpening, UIManager.I.ShowCompetitionIntro);
-            else if (currentChapter != null && currentChapter.number == 7) UIManager.I.ShowToast("顾客正在两家店之间选择——去市场中心查看你的份额");
-            else if (currentChapter != null && currentChapter.number == 8) UIManager.I.ShowToast("Sunny Tea 主动降价了：可以用价格，也可以用品质和品牌回应");
+                morningTaken = CutsceneDirector.TryPlay(s, (int)CutsceneId.SunnyTeaOpening, UIManager.I.ShowCompetitionIntro);
+            else if (currentChapter != null && currentChapter.number == 7)
+                UIManager.I.ShowToast("顾客正在两家店之间选择——去市场中心查看你的份额");
+            else if (currentChapter != null && currentChapter.number == 8)
+                UIManager.I.ShowToast("Sunny Tea 主动降价了：可以用价格，也可以用品质和品牌回应");
             else if (ProgressionService.RequiresPriceWarChoice(s))
                 // V0.7.4 过场 2:第 9 章首次弹出价格战面板之前(§148-2,清晨路径)
-                CutsceneDirector.TryPlay(s, (int)CutsceneId.PriceWarErupts, UIManager.I.ShowPriceWarChoice);
+                morningTaken = CutsceneDirector.TryPlay(s, (int)CutsceneId.PriceWarErupts, UIManager.I.ShowPriceWarChoice);
+            if (!morningTaken) UIManager.I.TryShowMorningMainline(s);
             return true;
         }
 
