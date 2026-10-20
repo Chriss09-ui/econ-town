@@ -100,8 +100,8 @@ namespace EconTown
                 s => s.centralBank.forexReservesBCurrency <
                      s.centralBank.forexReserveFloor + 160f &&
                      s.worldTrade.exchangeRate.regime == ExchangeRegime.Fixed,
-                s => "外储仅剩 " + s.centralBank.forexReservesBCurrency.ToString("0") +
-                     " B币（底线 " + s.centralBank.forexReserveFloor.ToString("0") + "）",
+                s => "外储仅剩 " + CivicBooks.Foreign(s.centralBank.forexReservesBCurrency) +
+                     "（底线 " + CivicBooks.Foreign(s.centralBank.forexReserveFloor) + "）",
                 s => "守住固定汇率的弹药越来越少：继续干预可能失守。"),
             Event("trade.fxwave", NewsCategory.International, "汇率单日波动放大", 10, .7f, "macro",
                 s => s.worldTrade.exchangeRate.history.Count >= 2 &&
@@ -540,11 +540,11 @@ namespace EconTown
                     NewsCategory.International,
                     surplus ? "小镇录得贸易顺差" : "小镇录得贸易逆差",
                     surplus
-                        ? "出口 ¥" + trade.exportsTotal.ToString("0") + " > 进口 ¥" + trade.importsTotal.ToString("0") +
+                        ? "出口 " + CivicBooks.Money(trade.exportsTotal) + " > 进口 " + CivicBooks.Money(trade.importsTotal) +
                           "。顺差意味着本国在对外放贷：资源真的被别国用走了吗？"
-                        : "进口 ¥" + trade.importsTotal.ToString("0") + " > 出口 ¥" + trade.exportsTotal.ToString("0") +
+                        : "进口 " + CivicBooks.Money(trade.importsTotal) + " > 出口 " + CivicBooks.Money(trade.exportsTotal) +
                           "。若进口的是机器与能源，逆差也可能是在为未来产能投资。",
-                    "本期 NX = ¥" + trade.netExports.ToString("0") +
+                    "本期 NX = " + CivicBooks.Signed(trade.netExports) +
                     "（汇率 " + trade.exchangeRateUsed.ToString("0.00") + "）", "macro", false);
             }
             CentralBankState central = state.centralBank;
@@ -552,8 +552,8 @@ namespace EconTown
                 AddNews(state, "metric.reserveslow", NewsCategory.International,
                     "外汇储备进入预警区间",
                     "外储是守住汇率的弹药；固定汇率制度下每一次干预都在消耗它。",
-                    "当前储备 " + central.forexReservesBCurrency.ToString("0") + " B币 · 底线 " +
-                    central.forexReserveFloor.ToString("0"), "macro", false);
+                    "当前储备 " + CivicBooks.Foreign(central.forexReservesBCurrency) + " · 底线 " +
+                    CivicBooks.Foreign(central.forexReserveFloor), "macro", false);
         }
 
         static string BuildEnterpriseCrisisCause(GameState state)

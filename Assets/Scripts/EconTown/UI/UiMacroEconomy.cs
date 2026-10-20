@@ -35,7 +35,7 @@ namespace EconTown
                 : state.progression.mainlineComplete || state.progression.completedChapter >= 30
                     ? "宏观经济 · 可以继续观察" : "宏观经济";
             MacroText(content, macroHeadline, 18, MacroTeal, 0f, 0f, 470f, 32f, TextAnchor.MiddleLeft, FontStyle.Bold);
-            MacroText(content, "第 " + m.period + " 期 · " + MacroEconomySimulator.CycleName(m.cyclePhase), 16,
+            MacroText(content, "第 " + m.period + " 期 · " + MacroEconomySimulator.CycleName(m.cyclePhase) + " · 万元", 16,
                 UiTheme.TextSub, 480f, 0f, 260f, 32f, TextAnchor.MiddleCenter);
             Button news = UiTheme.MakeButton(content, "经济新闻", ShowMacroNews, 17);
             MacroPlace(news.rectTransform(), 756f, 0f, 142f, 34f);
@@ -48,7 +48,7 @@ namespace EconTown
             MacroPlace(advance.rectTransform(), 1060f, 0f, 152f, 34f);
             UiTheme.SetButtonStyle(advance, MacroAmber, UiTheme.Ink);
 
-            MacroMetric(content, "实际 GDP", "¥ " + m.realGdp.ToString("0"), 0f, m.gdpGrowth >= 0f ? MacroTeal : MacroCoral);
+            MacroMetric(content, "实际 GDP", CivicBooks.Money(m.realGdp), 0f, m.gdpGrowth >= 0f ? MacroTeal : MacroCoral);
             MacroMetric(content, "实际增长", MacroSigned(m.gdpGrowth) + "%", 244f, m.gdpGrowth >= 0f ? MacroTeal : MacroCoral);
             MacroMetric(content, "通胀率", MacroSigned(m.inflation) + "%", 488f, Mathf.Abs(m.inflation) <= 3f ? MacroTeal : MacroCoral);
             MacroMetric(content, "失业率", m.unemploymentRate.ToString("0.0") + "%", 732f, m.unemploymentRate <= 7f ? MacroTeal : MacroCoral);
@@ -77,16 +77,16 @@ namespace EconTown
         void BuildNationalEconomyTab(RectTransform content, GameState state)
         {
             MacroEconomyState m = state.macro;
-            RectTransform equation = MacroCardPanel(content, "GDP 支出构成", "四项来自企业、居民与政府的真实账本", 0f, 178f, 580f, 286f);
-            string formula = "<b><color=#5DC3B6>C " + m.consumption.ToString("0") + "</color></b>  +  " +
-                "<b><color=#F2A93B>I " + m.investment.ToString("0") + "</color></b>  +  " +
-                "<b><color=#78A9E6>G " + m.governmentSpending.ToString("0") + "</color></b>  +  " +
-                "<b><color=#E9D4A8>NX " + MacroSignedMoney(m.netExports) + "</color></b>";
-            MacroText(equation, formula, 21, UiTheme.TextMain, 18f, 62f, 544f, 46f, TextAnchor.MiddleCenter, FontStyle.Bold);
-            MacroText(equation, "=  名义 GDP  ¥ " + m.nominalGdp.ToString("0"), 25, MacroAmber,
+            RectTransform equation = MacroCardPanel(content, "GDP 支出构成", "本市账本按万元计。店里的售价仍是元", 0f, 178f, 580f, 286f);
+            string formula = "<b><color=#5DC3B6>C " + CivicBooks.Money(m.consumption) + "</color></b>  +  " +
+                "<b><color=#F2A93B>I " + CivicBooks.Money(m.investment) + "</color></b>  +  " +
+                "<b><color=#78A9E6>G " + CivicBooks.Money(m.governmentSpending) + "</color></b>  +  " +
+                "<b><color=#E9D4A8>NX " + CivicBooks.Signed(m.netExports) + "</color></b>";
+            MacroText(equation, formula, 18, UiTheme.TextMain, 18f, 62f, 544f, 46f, TextAnchor.MiddleCenter, FontStyle.Bold);
+            MacroText(equation, "=  名义 GDP  " + CivicBooks.Money(m.nominalGdp), 25, MacroAmber,
                 18f, 112f, 544f, 42f, TextAnchor.MiddleCenter, FontStyle.Bold);
-            MacroText(equation, "基期价格折算后：实际 GDP ¥ " + m.realGdp.ToString("0") +
-                "  ·  人均 ¥ " + m.perCapitaGdp.ToString("0.0"), 17, UiTheme.TextSub,
+            MacroText(equation, "基期价格折算后：实际 GDP " + CivicBooks.Money(m.realGdp) +
+                "  ·  人均 " + CivicBooks.MoneyPerPerson(m.perCapitaGdp) + "/日", 17, UiTheme.TextSub,
                 18f, 165f, 544f, 36f, TextAnchor.MiddleCenter);
             Button valueAdded = UiTheme.MakeButton(equation, "为什么 2 + 5 + 10 不能算成 17？", () => ShowCardDetail("valueadded"), 17);
             MacroPlace(valueAdded.rectTransform(), 94f, 215f, 392f, 42f);
@@ -142,19 +142,19 @@ namespace EconTown
         void BuildEmploymentTab(RectTransform content, GameState state)
         {
             MacroEconomyState m = state.macro;
-            RectTransform accounting = MacroCardPanel(content, "劳动力人口怎么计算", "没有主动找工作的人不算失业", 0f, 178f, 580f, 304f);
-            LaborRow(accounting, "总人口", state.government.population, 62f, UiTheme.TextMain);
-            LaborRow(accounting, "工作年龄人口", m.workingAgePopulation, 103f, UiTheme.TextMain);
-            LaborRow(accounting, "劳动力人口", m.laborForce, 144f, MacroPaper);
-            LaborRow(accounting, "就业", m.employment, 185f, MacroTeal);
-            LaborRow(accounting, "失业", m.unemployment, 226f, MacroCoral);
-            MacroText(accounting, "失业率 = " + m.unemployment + " ÷ " + m.laborForce + " = " + m.unemploymentRate.ToString("0.0") + "%",
+            RectTransform accounting = MacroCardPanel(content, "劳动力人口怎么计算", "没有主动找工作的人不算失业。人数按千人计", 0f, 178f, 580f, 304f);
+            LaborRow(accounting, "总人口", CivicBooks.Heads(state.government.population), 62f, UiTheme.TextMain);
+            LaborRow(accounting, "工作年龄人口", CivicBooks.Heads(m.workingAgePopulation), 103f, UiTheme.TextMain);
+            LaborRow(accounting, "劳动力人口", CivicBooks.Heads(m.laborForce), 144f, MacroPaper);
+            LaborRow(accounting, "就业", CivicBooks.Heads(m.employment), 185f, MacroTeal);
+            LaborRow(accounting, "失业", CivicBooks.Heads(m.unemployment), 226f, MacroCoral);
+            MacroText(accounting, "失业率 = " + CivicBooks.Heads(m.unemployment) + " ÷ " + CivicBooks.Heads(m.laborForce) + " = " + m.unemploymentRate.ToString("0.0") + "%",
                 18, MacroAmber, 20f, 264f, 540f, 30f, TextAnchor.MiddleCenter, FontStyle.Bold);
 
             RectTransform graph = MacroCardPanel(content, "劳动力结构", "就业 / 摩擦性 / 结构性 / 周期性失业", 596f, 178f, 616f, 304f);
             AddMacroGraph(graph, state, MacroGraphMode.Employment, 16f, 60f, 584f, 164f);
-            MacroText(graph, "<color=#5DC3B6>就业 " + m.employment + "</color>   <color=#F2A93B>摩擦 " + m.frictionalUnemployment +
-                "</color>   <color=#78A9E6>结构 " + m.structuralUnemployment + "</color>   <color=#DD6B5A>周期 " + m.cyclicalUnemployment + "</color>",
+            MacroText(graph, "<color=#5DC3B6>就业 " + CivicBooks.Heads(m.employment) + "</color>   <color=#F2A93B>摩擦 " + CivicBooks.Heads(m.frictionalUnemployment) +
+                "</color>   <color=#78A9E6>结构 " + CivicBooks.Heads(m.structuralUnemployment) + "</color>   <color=#DD6B5A>周期 " + CivicBooks.Heads(m.cyclicalUnemployment) + "</color>",
                 16, UiTheme.TextSub, 24f, 237f, 568f, 42f, TextAnchor.MiddleCenter);
 
             RectTransform chain = MacroCardPanel(content, "微观行为怎样变成失业？", "这条链会反向影响下一期居民消费", 0f, 498f, 1212f, 156f);
@@ -178,19 +178,19 @@ namespace EconTown
                 22f, 210f, 46f, 22f, TextAnchor.MiddleRight, FontStyle.Bold);
             MacroText(graph, geometry.priceMin.ToString("0"), 13, UiTheme.TextSub,
                 22f, 337f, 46f, 22f, TextAnchor.MiddleRight);
-            MacroText(graph, geometry.outputMin.ToString("0"), 13, UiTheme.TextSub,
-                54f, 350f, 76f, 22f, TextAnchor.MiddleLeft);
-            MacroText(graph, ((geometry.outputMin + geometry.outputMax) * .5f).ToString("0"), 13, UiTheme.TextSub,
-                326f, 350f, 78f, 22f, TextAnchor.MiddleCenter);
-            MacroText(graph, geometry.outputMax.ToString("0"), 13, UiTheme.TextSub,
-                620f, 350f, 66f, 22f, TextAnchor.MiddleRight);
-            MacroText(graph, "实际产出 Q（¥）", 14, UiTheme.TextSub,
+            MacroText(graph, CivicBooks.Tick(geometry.outputMin), 13, UiTheme.TextSub,
+                54f, 350f, 90f, 22f, TextAnchor.MiddleLeft);
+            MacroText(graph, CivicBooks.Tick((geometry.outputMin + geometry.outputMax) * .5f), 13, UiTheme.TextSub,
+                310f, 350f, 100f, 22f, TextAnchor.MiddleCenter);
+            MacroText(graph, CivicBooks.Tick(geometry.outputMax), 13, UiTheme.TextSub,
+                590f, 350f, 96f, 22f, TextAnchor.MiddleRight);
+            MacroText(graph, "实际产出 Q", 14, UiTheme.TextSub,
                 520f, 327f, 164f, 24f, TextAnchor.MiddleRight, FontStyle.Bold);
             MacroText(graph, "<color=#5DC3B6>AD 总需求</color>   <color=#F2A93B>SRAS 短期总供给</color>   <color=#78A9E6>蓝线：潜在产出</color>   白点：当前均衡",
                 16, UiTheme.TextSub, 42f, 382f, 636f, 32f, TextAnchor.MiddleCenter);
-            MacroText(graph, "均衡产出 ¥" + geometry.equilibriumOutput.ToString("0") + "  ·  CPI " +
-                geometry.equilibriumPrice.ToString("0.0") + "  ·  潜在产出 ¥" + geometry.potentialOutput.ToString("0") +
-                "  ·  当前供给能力 ¥" + geometry.aggregateSupplyOutput.ToString("0"),
+            MacroText(graph, "均衡产出 " + CivicBooks.Money(geometry.equilibriumOutput) + "  ·  CPI " +
+                geometry.equilibriumPrice.ToString("0.0") + "  ·  潜在产出 " + CivicBooks.Money(geometry.potentialOutput) +
+                "  ·  当前供给能力 " + CivicBooks.Money(geometry.aggregateSupplyOutput),
                 16, UiTheme.TextMain, 24f, 420f, 672f, 38f, TextAnchor.MiddleCenter);
 
             RectTransform shocks = MacroCardPanel(content, "冲击实验", "选冲击，再运行下一期", 736f, 178f, 476f, 476f);
@@ -230,7 +230,7 @@ namespace EconTown
             Button minus = UiTheme.MakeButton(controls, "−", () => ChangeMacroInvestment(-250f), 24);
             Button plus = UiTheme.MakeButton(controls, "+", () => ChangeMacroInvestment(250f), 24);
             MacroPlace(minus.rectTransform(), 278f, 129f, 48f, 40f);
-            MacroText(controls, "¥ " + m.plannedPublicInvestment.ToString("0"), 21, MacroAmber, 330f, 129f, 142f, 40f, TextAnchor.MiddleCenter, FontStyle.Bold);
+            MacroText(controls, CivicBooks.Money(m.plannedPublicInvestment), 18, MacroAmber, 318f, 129f, 160f, 40f, TextAnchor.MiddleCenter, FontStyle.Bold);
             MacroPlace(plus.rectTransform(), 482f, 129f, 48f, 40f);
             UiTheme.SetButtonStyle(minus, MacroCardSoft, UiTheme.TextMain);
             UiTheme.SetButtonStyle(plus, MacroCardSoft, UiTheme.TextMain);
@@ -296,8 +296,8 @@ namespace EconTown
                 MacroText(market, "还没有住房市场记录。统一结算本日后，房价与租金会随镇上供需演化。",
                     17, UiTheme.TextSub, 20f, 122f, 540f, 90f, TextAnchor.MiddleCenter);
             }
-            MacroText(market, "房价 ¥ " + h.townHousePrice.ToString("0") + " / 套   ·   每期租金 ¥ " + h.periodRent.ToString("0") +
-                "   ·   存量 " + h.housingStock.ToString("0") + " 套 + 新开工 " + h.startsThisPeriod.ToString("0.0"),
+            MacroText(market, "房价 ¥" + h.townHousePrice.ToString("0") + "/套   ·   每期租金 ¥" + h.periodRent.ToString("0") +
+                "   ·   存量 " + CivicBooks.Count(h.housingStock, "套") + " + 新开工 " + CivicBooks.Count(h.startsThisPeriod, "套"),
                 16, MacroPaper, 18f, 248f, 544f, 28f, TextAnchor.MiddleCenter);
 
             RectTransform mortgage = MacroCardPanel(content, "房贷总量与杠杆", "柱：房贷余额  ·  线：房贷 / 年化 GDP", 596f, 178f, 616f, 286f);
@@ -373,20 +373,20 @@ namespace EconTown
             GameState state = GameState.I;
             if (state == null) return;
             MacroEconomySimulator.Ensure(state);
-            GameObject root = BeginPanel("经济新闻 · 因果而不是噪声", 880f, 650f);
+            GameObject root = BeginPanel("经济新闻", 880f, 700f);
             RectTransform content = ContentOf(root);
             if (state.macro.news.Count == 0)
             {
-                MacroText(content, "还没有宏观周期记录。回到宏观中心运行下一期，新闻会解释指标为什么变化。",
-                    20, UiTheme.TextSub, 40f, 80f, 752f, 80f, TextAnchor.MiddleCenter);
+                EventBrief(content, "还没有这一期的记录", "回到宏观中心再结算一期，这里会写出指标为什么变了。",
+                    20f, 12f, 792f, MacroTeal);
                 return;
             }
-            int count = Mathf.Min(7, state.macro.news.Count);
+            int count = Mathf.Min(6, state.macro.news.Count);
             for (int i = 0; i < count; i++)
             {
                 int index = i;
                 Button item = UiTheme.MakeButton(content, state.macro.news[i], () => ShowMacroRecord(index), 17);
-                MacroPlace(item.rectTransform(), 20f, 12f + i * 70f, 792f, 58f);
+                MacroPlace(item.rectTransform(), 20f, 12f + i * 84f, 792f, 72f);
                 UiTheme.SetButtonStyle(item, i == 0 ? MacroCardSoft : MacroCard, UiTheme.TextMain);
             }
         }
@@ -397,24 +397,27 @@ namespace EconTown
             int index = m.history.Count - 1 - newestIndex;
             if (index < 0 || index >= m.history.Count) return;
             MacroPeriodRecord r = m.history[index];
-            GameObject root = BeginPanel("第 " + r.period + " 期 · " + r.headline, 840f, 520f);
+            GameObject root = BeginPanel("第 " + r.period + " 期 · " + r.headline, 840f, 560f);
             RectTransform content = ContentOf(root);
-            Text chain = MacroText(content, r.causalChain, 21, UiTheme.TextMain, 28f, 20f, 736f, 94f, TextAnchor.UpperLeft, FontStyle.Bold);
-            float chainShift = ExpandTopText(chain);
-            GrowPanel(root, chainShift);
-            MacroText(content, "实际 GDP  ¥ " + r.realGdp.ToString("0") + "    增长 " + MacroSigned(r.gdpGrowth) + "%\n" +
-                "CPI " + r.cpi.ToString("0.0") + "    通胀 " + MacroSigned(r.inflation) + "%    失业 " + r.unemploymentRate.ToString("0.0") + "%\n" +
-                "消费 " + r.consumption.ToString("0") + "    投资 " + r.investment.ToString("0") + "    政府购买 " + r.governmentSpending.ToString("0") + "    净出口 " + MacroSignedMoney(r.netExports),
-                19, UiTheme.TextSub, 28f, 132f + chainShift, 736f, 130f, TextAnchor.UpperLeft);
-            MacroText(content, "周期位置：" + MacroEconomySimulator.CycleName(r.cyclePhase) + "    产出缺口 " + MacroSigned(r.outputGap) + "%\n" +
-                "消费者信心 " + r.consumerConfidence.ToString("0") + "    企业信心 " + r.businessConfidence.ToString("0"),
-                19, MacroTeal, 28f, 282f + chainShift, 736f, 80f, TextAnchor.UpperLeft);
+            const float width = 792f;
+            float y = EventBrief(content, "这一期为什么变成这样", r.causalChain, 0f, 0f, width, MacroTeal) + 16f;
+            Text scale = MacroText(content, "实际 GDP  " + CivicBooks.Money(r.realGdp) + "    增长 " + MacroSigned(r.gdpGrowth) + "%\n" +
+                "物价指数 " + r.cpi.ToString("0.0") + "    通胀 " + MacroSigned(r.inflation) + "%    失业 " + r.unemploymentRate.ToString("0.0") + "%",
+                19, UiTheme.TextMain, 8f, y, width - 16f, 72f, TextAnchor.UpperLeft);
+            scale.verticalOverflow = VerticalWrapMode.Overflow;
+            Text parts = MacroText(content, "消费 " + CivicBooks.Money(r.consumption) + "    投资 " + CivicBooks.Money(r.investment) +
+                "    政府购买 " + CivicBooks.Money(r.governmentSpending) + "    净出口 " + CivicBooks.Signed(r.netExports) +
+                "\n周期 " + MacroEconomySimulator.CycleName(r.cyclePhase) + "    产出缺口 " + MacroSigned(r.outputGap) + "%" +
+                "    居民信心 " + r.consumerConfidence.ToString("0") + "    企业信心 " + r.businessConfidence.ToString("0"),
+                17, UiTheme.TextSub, 8f, y + 80f, width - 16f, 72f, TextAnchor.UpperLeft);
+            parts.verticalOverflow = VerticalWrapMode.Overflow;
             string conceptId = r.shock == MacroShockType.EnergyCrisis ? "stagflation" :
                 r.shock == MacroShockType.AiRevolution ? "productivity" :
                 r.gdpGrowth < 0f ? "businesscycle" : "gdp";
-            Button concept = UiTheme.MakeButton(content, "打开相关概念卡", () => ShowCardDetail(conceptId), 18);
-            MacroPlace(concept.rectTransform(), 276f, 386f + chainShift, 288f, 46f);
+            Button concept = UiTheme.MakeButton(content, "看相关概念", () => ShowCardDetail(conceptId), 18);
+            MacroPlace(concept.rectTransform(), 252f, y + 168f, 288f, 46f);
             UiTheme.SetButtonStyle(concept, MacroPaper, UiTheme.Ink);
+            FitEventPanel(root, y + 226f);
         }
 
         public void ShowNationalReport()
@@ -432,7 +435,7 @@ namespace EconTown
             ReportLine(content, "物价稳定", "通胀 " + MacroSigned(m.inflation) + "%", Mathf.Abs(m.inflation) <= 3f ? "价格总体稳定" : "生活成本压力偏高", 154f);
             ReportLine(content, "充分就业", "失业 " + m.unemploymentRate.ToString("0.0") + "%", m.unemploymentRate <= 7f ? "就业较充分" : "仍有明显闲置劳动力", 212f);
             ReportLine(content, "财政空间", "债务 / GDP " + m.debtToGdp.ToString("0.0") + "%", m.debtToGdp <= 40f ? "仍有政策空间" : "利息与偿债会挤压未来选择", 270f);
-            ReportLine(content, "居民收入", "中位收入 ¥ " + state.government.medianIncome.ToString("0"), "工资与就业共同决定家庭购买力", 328f);
+            ReportLine(content, "居民收入", "中位收入 " + CivicBooks.MoneyPerPerson(state.government.medianIncome) + "/日", "工资与就业共同决定家庭购买力", 328f);
             ReportLine(content, "分配差距", "不平等指数 " + m.incomeInequality.ToString("0.0"), "指数越高，收入与购买力差距越明显", 386f);
             ReportLine(content, "长期能力", "生产率 " + m.productivity.ToString("0.0"), "教育、技术和资本积累决定潜在 GDP", 444f);
             MacroText(content, "提醒：污染清理和灾后重建会增加支出与 GDP，但不代表居民一定比灾害发生前更幸福。",
@@ -527,10 +530,10 @@ namespace EconTown
                 350f, y, 190f, 30f, TextAnchor.MiddleRight, FontStyle.Bold);
         }
 
-        void LaborRow(RectTransform parent, string name, int value, float y, Color color)
+        void LaborRow(RectTransform parent, string name, string value, float y, Color color)
         {
-            MacroText(parent, name, 18, UiTheme.TextSub, 24f, y, 280f, 32f, TextAnchor.MiddleLeft);
-            MacroText(parent, value + " 人", 21, color, 330f, y, 210f, 32f, TextAnchor.MiddleRight, FontStyle.Bold);
+            MacroText(parent, name, 18, UiTheme.TextSub, 24f, y, 220f, 32f, TextAnchor.MiddleLeft);
+            MacroText(parent, value, 21, color, 250f, y, 290f, 32f, TextAnchor.MiddleRight, FontStyle.Bold);
         }
 
         void ReportLine(RectTransform parent, string label, string value, string note, float y)
@@ -595,8 +598,6 @@ namespace EconTown
             if (shown == 0f) shown = 0f;   // 负零归正(-0f==0f 为真,再赋正零),防「+-0.0%」
             return (shown >= 0f ? "+" : "") + shown.ToString("0.0");
         }
-        static string MacroSignedMoney(float value) { return (value >= 0f ? "+¥ " : "−¥ ") + Mathf.Abs(value).ToString("0"); }
-
         static string MacroChapterTitle(int chapter)
         {
             string[] titles = { "第 1 章 · 一座小镇的 GDP", "第 2 章 · 名义与实际增长", "第 3 章 · 物价与通胀",

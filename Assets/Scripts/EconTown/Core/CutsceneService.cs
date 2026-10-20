@@ -71,10 +71,10 @@ namespace EconTown
                     return "B 国关税升至 " +
                            (state.worldTrade.countryB.tariffOnAExports * 100f).ToString("0") + "%";
                 case (int)CutsceneId.Finale:
-                    return "第 " + state.economy.worldDay + " 世界日 · 名义 GDP ¥" +
+                    return "第 " + state.economy.worldDay + " 世界日 · 名义 GDP " +
                            (state.macro != null && state.macro.history.Count > 0
-                               ? state.macro.history[state.macro.history.Count - 1].nominalGdp.ToString("0")
-                               : TownGrowthService.GdpBaselineYuan.ToString("0"));
+                               ? CivicBooks.Money(state.macro.history[state.macro.history.Count - 1].nominalGdp)
+                               : CivicBooks.Money(TownGrowthService.GdpBaselineYuan));
                 case (int)CutsceneId.HousingMania:
                     return "镇房价年化 " + HousingService.AnnualPriceGrowth(state).ToString("+0;-0") +
                            "% · 泡沫压力 " + (state.housing != null ? state.housing.bubblePressure : 0f).ToString("0") + "/100";
@@ -85,10 +85,10 @@ namespace EconTown
                     return "小店累计净利 ¥" + state.TotalProfit.ToString("0") +
                            " · 居民幸福 " + (state.resident != null ? state.resident.happiness : 0f).ToString("0");
                 case (int)CutsceneId.BureauHandover:
-                    return "财政余额 ¥" + state.government.budgetBalance.ToString("0") + " · 名义 GDP ¥" +
+                    return "财政余额 " + CivicBooks.Signed(state.government.budgetBalance) + " · 名义 GDP " +
                            (state.macro != null && state.macro.history.Count > 0
-                               ? state.macro.history[state.macro.history.Count - 1].nominalGdp.ToString("0")
-                               : TownGrowthService.GdpBaselineYuan.ToString("0"));
+                               ? CivicBooks.Money(state.macro.history[state.macro.history.Count - 1].nominalGdp)
+                               : CivicBooks.Money(TownGrowthService.GdpBaselineYuan));
                 case (int)CutsceneId.BankMandate:
                     return "存款 ¥" + state.bank.TotalDeposits.ToString("0") +
                            " · 贷款 ¥" + state.bank.PerformingLoans.ToString("0") +
@@ -99,7 +99,7 @@ namespace EconTown
                     List<TradeDayRecord> tradeHistory = state.worldTrade != null ? state.worldTrade.history : null;
                     for (int i = 0; tradeHistory != null && i < tradeHistory.Count; i++)
                         if (tradeHistory[i] != null) exports += tradeHistory[i].exportsTotal;
-                    return "累计出口 ¥" + exports.ToString("0") +
+                    return "累计出口 " + CivicBooks.Money(exports) +
                            " · 居民存款 ¥" + (state.resident != null ? state.resident.savings.ToString("0") : "0");
                 }
                 default: return "";

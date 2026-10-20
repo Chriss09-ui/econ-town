@@ -310,8 +310,8 @@ namespace EconTown
                 }
                 if (central.forexReservesBCurrency < 500f)
                 {
-                    message = "外汇储备不足（" + central.forexReservesBCurrency.ToString("0") +
-                        " B币 < 500）：守汇需要弹药，先补充储备再固定。";
+                    message = "外汇储备不足（" + CivicBooks.Foreign(central.forexReservesBCurrency) +
+                        " < " + CivicBooks.Foreign(500f) + "）：守汇需要弹药，先补充储备再固定。";
                     return false;
                 }
                 if (fx.lastAbandonPegWorldDay >= 0 && state.day - fx.lastAbandonPegWorldDay < 7)

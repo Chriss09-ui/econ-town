@@ -53,11 +53,10 @@ namespace EconTown
             PlaceTopLeft(nextCycle.rectTransform(), 1042f, 0f, 170f, 36f);
             UiTheme.SetButtonStyle(nextCycle, UiTheme.Accent, UiTheme.Ink);
 
-            GovMetric(content, "政府资金", "¥ " + government.cash.ToString("0"), 0f,
+            GovMetric(content, "政府资金", CivicBooks.Money(government.cash), 0f,
                 government.cash > 1000f ? UiTheme.Good : UiTheme.Bad);
-            int balanceShown = Mathf.RoundToInt(government.budgetBalance);   // 围猎三#3 复审:先取整再判号,差额跨零不再显示「¥ -0」
-            GovMetric(content, "本期收支", (balanceShown >= 0 ? "+" : "") + "¥ " + balanceShown, 244f,
-                balanceShown >= 0 ? UiTheme.Good : UiTheme.Bad);
+            GovMetric(content, "本期收支", CivicBooks.Signed(government.budgetBalance), 244f,
+                government.budgetBalance >= 0f ? UiTheme.Good : UiTheme.Bad);
             GovMetric(content, "城市支持率", government.approvalRating.ToString("0") + "%", 488f, GovTeal);
             GovMetric(content, "就业率", government.employmentRate.ToString("0.0") + "%", 732f, UiTheme.Accent);
             GovMetric(content, "环境质量", government.environmentQuality.ToString("0"), 976f,
@@ -87,7 +86,7 @@ namespace EconTown
         {
             GovernmentState g = state.government;
             GovernmentBudgetPreview budget = GovernmentSimulator.PreviewBudget(state);
-            RectTransform ledger = GovCardPanel(content, "本周期财政账本", "钱从哪里来，又花到哪里去", 0f, 182f, 580f, 474f);
+            RectTransform ledger = GovCardPanel(content, "本周期财政账本", "按万元记账。一杯果汁和时薪仍是元", 0f, 182f, 580f, 474f);
             GovLedgerRow(ledger, "规费与自动税收", budget.otherFeesRevenue + budget.automaticTaxChange, 64f, true);
             GovLedgerRow(ledger, "饮品税（今日待入账）", budget.drinkTaxRevenue, 94f, true);
             GovLedgerRow(ledger, "污染税（今日待入账）", budget.pollutionTaxRevenue, 124f, true);
@@ -97,7 +96,7 @@ namespace EconTown
             GovLedgerRule(ledger, 184f);
             GovLedgerRow(ledger, "预计总收入", budget.totalIncome, 190f, true, true);
             GovLedgerRow(ledger, "行政管理", budget.administrativeSpending, 230f, false);
-            GovLedgerRow(ledger, "福利 · " + GovernmentSimulator.WelfareEnrolledResidents(state) + " 人(首批覆盖 25%)", budget.welfareSpending, 260f, false);
+            GovLedgerRow(ledger, "福利 · " + CivicBooks.Heads(GovernmentSimulator.WelfareEnrolledResidents(state)) + "（首批覆盖 25%）", budget.welfareSpending, 260f, false);
             GovLedgerRow(ledger, "商品/设备/培训补贴", budget.subsidySpending + budget.trainingSpending, 290f, false);
             GovLedgerRow(ledger, "公共服务与项目维护", budget.publicServiceSpending, 320f, false);
             GovLedgerRow(ledger, "公共项目与财政立场", budget.capitalSpending + budget.fiscalPurchase, 350f, false);
@@ -116,7 +115,11 @@ namespace EconTown
             }
 
             RectTransform brief = GovCardPanel(content, "市长简报", "决策前先看约束，不替你给出唯一答案", 600f, 466f, 612f, 190f);
-            string summary = string.IsNullOrEmpty(g.lastPolicySummary) ? "尚未调整政策。先运行公共品实验，或从上方栏目选择一项政策。" : g.lastPolicySummary;
+            string summary = string.IsNullOrEmpty(g.lastPolicySummary)
+                ? "还没动过政策。路灯实验不在本页，在上方「公共建设」。"
+                : g.lastPolicySummary.Contains("个政策周期")
+                    ? GovernmentSimulator.CycleBrief(g)
+                    : g.lastPolicySummary;
             GovText(brief, summary, 18, UiTheme.TextMain, 18f, 58f, 576f, 54f, TextAnchor.UpperLeft);
             string npc = string.IsNullOrEmpty(g.lastNpcFeedback) ? "居民代表：我们关心服务，也关心这笔钱由谁承担。" : g.lastNpcFeedback;
             GovText(brief, npc, 16, UiTheme.TextSub, 18f, 116f, 400f, 48f, TextAnchor.UpperLeft);
@@ -125,6 +128,12 @@ namespace EconTown
                 Button eventButton = UiTheme.MakeButton(brief, "处理事件：" + g.currentEvent.title, ShowGovernmentEvent, 17);
                 PlaceTopLeft(eventButton.rectTransform(), 424f, 116f, 170f, 48f);
                 UiTheme.SetButtonStyle(eventButton, UiTheme.Bad, Color.white);
+            }
+            else if (!g.freeRiderExperimentDone)
+            {
+                Button experiment = UiTheme.MakeButton(brief, "打开公共建设", () => ReloadGovernment(5), 17);
+                PlaceTopLeft(experiment.rectTransform(), 424f, 116f, 170f, 48f);
+                UiTheme.SetButtonStyle(experiment, GovTeal, UiTheme.Ink);
             }
         }
 
@@ -247,8 +256,8 @@ namespace EconTown
                 18f, 70f, 404f, 90f, TextAnchor.MiddleCenter, FontStyle.Bold);
             GovText(experiment,
                 g.freeRiderExperimentDone ? "路灯对所有人都有好处，即使没出钱也无法把他排除。自愿筹资因此失败。" :
-                "实验不会扣除政府资金。它用来观察公共品为什么经常无法靠自愿交易充分提供。",
-                17, UiTheme.TextMain, 18f, 184f, 404f, 92f, TextAnchor.UpperLeft);
+                "点下面的按钮。20 位居民各自决定出不出钱，目标是自愿凑满 ¥1000 来装路灯。不扣政府的钱，也不改税。路灯装上后，没出钱的人一样能用，所以会有人等别人付。",
+                17, UiTheme.TextMain, 18f, 184f, 404f, 110f, TextAnchor.UpperLeft);
             Button run = UiTheme.MakeButton(experiment, g.freeRiderExperimentDone ? "实验已完成" : "运行自愿筹资实验", () =>
             {
                 if (GovernmentSimulator.RunFreeRiderExperiment(state)) ReloadGovernment(5);
@@ -258,7 +267,7 @@ namespace EconTown
             GovText(experiment, "结论不是“居民自私”，而是个人有动力等待别人付费。政府提供公共品正是在改变这组激励。",
                 15, UiTheme.TextSub, 18f, 377f, 404f, 66f, TextAnchor.UpperLeft);
 
-            RectTransform projects = GovCardPanel(content, "公共建设清单", "一次建设 + 每周期维护；建成后全体居民共享", 460f, 182f, 752f, 474f);
+            RectTransform projects = GovCardPanel(content, "公共建设清单", "一次建设 + 每周期维护，金额按万元", 460f, 182f, 752f, 474f);
             for (int i = 0; i < g.projects.Count; i++)
                 GovProjectRow(projects, state, g.projects[i], 62f + i * 76f);
         }
@@ -350,7 +359,7 @@ namespace EconTown
             PlaceTopLeft(row.rectTransform, 16f, y, parent.sizeDelta.x - 32f, 64f);
             float width = row.rectTransform.sizeDelta.x;
             GovText(row.rectTransform, project.name, 18, UiTheme.TextMain, 14f, 3f, 210f, 28f, TextAnchor.MiddleLeft, FontStyle.Bold);
-            GovText(row.rectTransform, "建设 ¥" + project.buildCost.ToString("0") + " · 维护 ¥" + project.maintenanceCost.ToString("0") + "/周期",
+            GovText(row.rectTransform, "建设 " + CivicBooks.Money(project.buildCost) + " · 维护 " + CivicBooks.Money(project.maintenanceCost) + "/周期",
                 13, UiTheme.TextSub, 14f, 31f, 310f, 22f);
             GovText(row.rectTransform, "服务 +" + project.serviceGain.ToString("0") + "  幸福 +" + project.happinessGain.ToString("0"),
                 15, GovTeal, 330f, 11f, 190f, 36f, TextAnchor.MiddleCenter, FontStyle.Bold);
@@ -375,9 +384,8 @@ namespace EconTown
         {
             GovText(parent, label, total ? 18 : 16, total ? UiTheme.TextMain : UiTheme.TextSub,
                 18f, y, parent.sizeDelta.x - 180f, 32f, TextAnchor.MiddleLeft, total ? FontStyle.Bold : FontStyle.Normal);
-            string sign = income ? "+" : "−";
-            if (amount < 0f) sign = "−";
-            GovText(parent, sign + " ¥ " + Mathf.Abs(amount).ToString("0"), total ? 20 : 17,
+            float signed = income && amount >= 0f ? amount : -Mathf.Abs(amount);
+            GovText(parent, CivicBooks.Signed(signed), total ? 18 : 16,
                 income ? UiTheme.Good : UiTheme.Bad, parent.sizeDelta.x - 160f, y, 142f, 32f,
                 TextAnchor.MiddleRight, FontStyle.Bold);
         }
@@ -539,21 +547,32 @@ namespace EconTown
                 return;
             }
             SaveSystem.SaveKeyMoment(state, "关键选择：城市事件 " + cityEvent.title);
-            GameObject root = BeginPanel("城市事件 · " + cityEvent.title, 760f, 560f);
+            GameObject root = BeginPanel("城市事件 · " + cityEvent.title, 760f, 640f);
             root.name = "panel_government_event";
             RectTransform content = ContentOf(root);
-            Text description = GovText(content, cityEvent.description, 21, UiTheme.TextMain, 24f, 22f, 664f, 86f, TextAnchor.MiddleCenter);
-            float descriptionShift = ExpandTopText(description);
-            GrowPanel(root, descriptionShift);
-            GovText(content, "没有单一正确答案。选择你愿意承担的代价。", 16, GovTeal, 24f, 112f + descriptionShift, 664f, 30f, TextAnchor.MiddleCenter, FontStyle.Bold);
+            const float width = 712f;
+            float y = EventBrief(content, "先看会发生什么，再选", cityEvent.description, 0f, 0f, width, GovTeal) + 16f;
             string[] options = { cityEvent.optionA, cityEvent.optionB, cityEvent.optionC };
             for (int i = 0; i < options.Length; i++)
             {
                 int choice = i;
-                Button option = UiTheme.MakeButton(content, options[i], () => ResolveGovernmentEvent(choice), 19);
-                PlaceTopLeft(option.rectTransform(), 74f, 166f + descriptionShift + i * 86f, 564f, 64f);
-                if (i == 1) UiTheme.SetButtonStyle(option, GovTeal, Color.white);
+                EventChoice(content, options[i], CityEventCost(cityEvent.id, i), 0f, y, width, () => ResolveGovernmentEvent(choice));
+                y += 100f;
             }
+            FitEventPanel(root, y);
+        }
+
+        static string CityEventCost(string id, int option)
+        {
+            if (id == "pollution_accident")
+                return option == 0 ? "政府先垫 ¥1000 去治理" : option == 1 ? "污染税至少提到 3" : "环境已经变差，政策先不动";
+            if (id == "shortage")
+                return option == 0 ? "饮品补贴至少提到 2" : option == 1 ? "价格上限设为 ¥15" : "市价再涨 ¥2";
+            if (id == "layoff")
+                return option == 0 ? "就业补贴 ¥800" : option == 1 ? "企业信心 +5" : "不加预算，就业先下降";
+            if (id == "price_protest")
+                return option == 0 ? "生活补贴至少 ¥50" : option == 1 ? "价格上限设为 ¥15" : "居民支持 -5";
+            return "";
         }
 
         void ResolveGovernmentEvent(int option)
@@ -591,7 +610,7 @@ namespace EconTown
             float fiscal = GovernmentSimulator.FiscalHealth(g);
             GovReportGrade(content, "财政健康", GovernmentSimulator.Grade(fiscal), fiscal, 654f, new Color32(0xd7, 0x9a, 0xc9, 255));
             RectTransform story = GovCardPanel(content, "你的政策画像", "成绩来自取舍，没有一种风格能同时最大化所有目标", 0f, 190f, 872f, 312f);
-            GovText(story, "任期内记录 " + g.history.Count + " 个政策周期，当前债务 ¥" + g.debt.ToString("0") +
+            GovText(story, "任期内记录 " + g.history.Count + " 个政策周期，当前债务 " + CivicBooks.Money(g.debt) +
                 "，支持率 " + g.approvalRating.ToString("0") + "% 。", 20, UiTheme.TextMain,
                 24f, 70f, 824f, 42f, TextAnchor.MiddleCenter, FontStyle.Bold);
             GovOutcomeBlock(story, "你守住的目标", BestGovernmentOutcome(g), 24f, 132f, UiTheme.Good);

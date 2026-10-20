@@ -109,7 +109,7 @@ namespace EconTown
                 ShopText(quote, "尚未形成汇率史：结算一天后显示变动方向。", 16, UiTheme.TextSub,
                     20f, 118f, 360f, 30f);
             ShopText(quote, "名义锚 1 B币 = " + AnchorText(fx.baseRate) +
-                " A币　·　外汇储备 " + s.centralBank.forexReservesBCurrency.ToString("0") + " B币",
+                " A币　·　外汇储备 " + CivicBooks.Foreign(s.centralBank.forexReservesBCurrency),
                 15, UiTheme.TextSub, 20f, 156f, 366f, 44f, TextAnchor.UpperLeft);
 
             RectTransform bProfile = WorldCard(c, trade.countryB.name, 424f, 62f, 380f, 210f, WorldGold);
@@ -126,12 +126,12 @@ namespace EconTown
             if (row != null)
             {
                 ShopText(balance,
-                    "出口 X ¥" + row.exportsTotal.ToString("0") +
-                    "\n进口 M ¥" + row.importsTotal.ToString("0") +
-                    "\n净出口 NX ¥" + row.netExports.ToString("0") +
-                    "\n经常账户 CA " + row.currentAccountBCurrency.ToString("+0.0;-0.0") +
-                    " B币，资本账户 KA " +
-                    (row.capitalInflowBCurrency - row.capitalOutflowBCurrency).ToString("+0.0;-0.0") + " B币",
+                    "出口 X " + CivicBooks.Money(row.exportsTotal) +
+                    "\n进口 M " + CivicBooks.Money(row.importsTotal) +
+                    "\n净出口 NX " + CivicBooks.Signed(row.netExports) +
+                    "\n经常账户 CA " + CivicBooks.SignedForeign(row.currentAccountBCurrency) +
+                    "，资本账户 KA " +
+                    CivicBooks.SignedForeign(row.capitalInflowBCurrency - row.capitalOutflowBCurrency),
                     18, UiTheme.TextMain, 20f, 52f, 388f, 150f, TextAnchor.UpperLeft);
             }
             else
@@ -178,7 +178,7 @@ namespace EconTown
                 new Rect(24f, 92f, 372f, 120f), () => ResolveTradeWarChoice(s, root, 0));
             AddWarOption(war, s, root, "对等关税 +5pp", "保护国内同类企业；进口到岸价上涨、供应链承压，或再遭报复。",
                 new Rect(426f, 92f, 372f, 120f), () => ResolveTradeWarChoice(s, root, 1));
-            AddWarOption(war, s, root, "财政补贴出口 ¥150", "稳住海外订单、品牌 +2；赤字扩大由全体纳税人承担。",
+            AddWarOption(war, s, root, "财政补贴出口 " + CivicBooks.Money(150f), "稳住海外订单、品牌 +2；赤字扩大由全体纳税人承担。",
                 new Rect(828f, 92f, 372f, 120f), () => ResolveTradeWarChoice(s, root, 2));
         }
 
@@ -220,7 +220,7 @@ namespace EconTown
             {
                 state.government.pendingSubsidySpending += 150f;
                 state.playerBrand = Mathf.Clamp(state.playerBrand + 2f, 0f, 100f);
-                summary = "出口补贴 ¥150 已挂入下期支出，品牌 +2 提升海外竞争力；代价是财政空间缩小。";
+                summary = "出口补贴 " + CivicBooks.Money(150f) + " 已挂入下期支出，品牌 +2 提升海外竞争力；代价是财政空间缩小。";
             }
             state.worldTrade.pendingTradeWarChoice = false;
             state.UnlockCard("intl.tradewar");
@@ -289,13 +289,13 @@ namespace EconTown
             ShopText(ledger,
                 "出口｜玩家出货 " + row.playerExportUnits.ToString("0") + " 杯 × ¥" +
                 InternationalPriceService.ProducerFobPerUnit(s).ToString("0.00") + " ≈ ¥" +
-                row.playerExportRevenue.ToString("0") + "（运费 −¥" + row.playerShippingCost.ToString("0") + "）\n" +
-                "　　　镇集体商行基线 ¥" + row.townExportRevenue.ToString("0") + "\n" +
-                "进口｜居民消费品 ¥" + row.consumerImportSpend.ToString("0") +
-                " · 企业中间投入 ¥" + row.intermediateImportSpend.ToString("0") +
-                " · 商行与其他 ¥" + row.townImportSpend.ToString("0") + "\n" +
-                "关税｜" + (row.tariffRateApplied * 100f).ToString("0") + "% × 完税基数 ¥" +
-                row.tariffBase.ToString("0") + " = 关税收 ¥" + row.tariffRevenue.ToString("0") +
+                row.playerExportRevenue.ToString("0") + "（店内实收，运费 −¥" + row.playerShippingCost.ToString("0") + "）\n" +
+                "　　　镇集体商行 " + CivicBooks.Money(row.townExportRevenue) + "\n" +
+                "进口｜居民消费品 " + CivicBooks.Money(row.consumerImportSpend) +
+                " · 企业中间投入 " + CivicBooks.Money(row.intermediateImportSpend) +
+                " · 商行与其他 " + CivicBooks.Money(row.townImportSpend) + "\n" +
+                "关税｜" + (row.tariffRateApplied * 100f).ToString("0") + "% × 完税基数 " +
+                CivicBooks.Money(row.tariffBase) + " = 关税收 " + CivicBooks.Money(row.tariffRevenue) +
                 "\n参考｜进口巧克力礼盒现价 ≈ ¥" +
                 InternationalPriceService.ImportedSkuConsumerPrice(s, .85f).ToString("0.00") +
                 " = 0.85 B币 × 汇率 × (1+" + taxPercent.ToString("0") + "%）",
@@ -311,7 +311,7 @@ namespace EconTown
             RectTransform market = WorldCard(c, "外汇市场 ·「1 B币 = X A币」（X 变大 = A币贬值）",
                 12f, 62f, 610f, 700f);
             Button switchBtn = UiTheme.MakeButton(market,
-                fx.regime == ExchangeRegime.Fixed ? "转入浮动汇率" : "宣布固定汇率（可信度≥60 且储备≥500）", () =>
+                fx.regime == ExchangeRegime.Fixed ? "转入浮动汇率" : "宣布固定汇率（可信度≥60 且储备≥" + CivicBooks.Foreign(500f) + "）", () =>
                 {
                     ExchangeRegime target =
                         fx.regime == ExchangeRegime.Fixed ? ExchangeRegime.Floating : ExchangeRegime.Fixed;
@@ -344,10 +344,10 @@ namespace EconTown
                 bool ammoLow = s.centralBank.forexReservesBCurrency <
                                s.centralBank.forexReserveFloor + 160f;
                 ShopText(market,
-                    "守汇弹药：外储 " + s.centralBank.forexReservesBCurrency.ToString("0") +
-                    " B币（底线 " + s.centralBank.forexReserveFloor.ToString("0") +
-                    "，单日上限 " + s.centralBank.maxDailyInterventionBCurrency.ToString("0") + "）\n" +
-                    "累计干预 " + s.centralBank.cumulativeInterventionBCurrency.ToString("0") + " B币 / " +
+                    "守汇弹药：外储 " + CivicBooks.Foreign(s.centralBank.forexReservesBCurrency) +
+                    "（底线 " + CivicBooks.Foreign(s.centralBank.forexReserveFloor) +
+                    "，单日上限 " + CivicBooks.Foreign(s.centralBank.maxDailyInterventionBCurrency) + "）\n" +
+                    "累计干预 " + CivicBooks.Foreign(s.centralBank.cumulativeInterventionBCurrency) + " / " +
                     s.centralBank.interventionDays + " 天。弹药见底或缺口>15% 将被迫失守。",
                     16, ammoLow ? UiTheme.Bad : UiTheme.TextSub, 22f, 152f, 570f, 70f, TextAnchor.UpperLeft);
 

@@ -95,10 +95,10 @@ namespace EconTown
             ShopText(table.rectTransform, "A · " + record.scenarioA.label, 18, UiTheme.Accent, 470f, 10f, 250f, 34f, TextAnchor.MiddleCenter, FontStyle.Bold);
             ShopText(table.rectTransform, "B · " + record.scenarioB.label, 18, new Color32(0x78, 0xd0, 0xc2, 255), 760f, 10f, 270f, 34f, TextAnchor.MiddleCenter, FontStyle.Bold);
             string[] labels = { "实际 GDP", "失业率", "通胀率", "政府债务", "企业利润" };
-            string[] a = { record.outcomeA.realGdp.ToString("0"), record.outcomeA.unemploymentRate.ToString("0.0") + "%",
-                record.outcomeA.inflation.ToString("0.0") + "%", record.outcomeA.governmentDebt.ToString("0"), record.outcomeA.businessProfit.ToString("0") };
-            string[] b = { record.outcomeB.realGdp.ToString("0"), record.outcomeB.unemploymentRate.ToString("0.0") + "%",
-                record.outcomeB.inflation.ToString("0.0") + "%", record.outcomeB.governmentDebt.ToString("0"), record.outcomeB.businessProfit.ToString("0") };
+            string[] a = { CivicBooks.Money(record.outcomeA.realGdp), record.outcomeA.unemploymentRate.ToString("0.0") + "%",
+                record.outcomeA.inflation.ToString("0.0") + "%", CivicBooks.Money(record.outcomeA.governmentDebt), "¥" + record.outcomeA.businessProfit.ToString("0") };
+            string[] b = { CivicBooks.Money(record.outcomeB.realGdp), record.outcomeB.unemploymentRate.ToString("0.0") + "%",
+                record.outcomeB.inflation.ToString("0.0") + "%", CivicBooks.Money(record.outcomeB.governmentDebt), "¥" + record.outcomeB.businessProfit.ToString("0") };
             for (int i = 0; i < labels.Length; i++)
             {
                 float rowY = 50f + i * 36f;

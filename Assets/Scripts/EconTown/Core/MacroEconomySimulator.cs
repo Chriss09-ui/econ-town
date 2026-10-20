@@ -165,8 +165,8 @@ namespace EconTown
         {
             float multiplier = m == null ? 1.5f : m.fiscalMultiplier;
             if (stance == FiscalStance.Expansionary)
-                return "方向：总需求、订单与就业上升。风险：赤字、债务与通胀压力上升。投入完全传导后约形成 ¥" +
-                    (publicInvestment * multiplier).ToString("0") + " 的需求拉动，但审批和施工存在时滞。";
+                return "方向：总需求、订单与就业上升。风险：赤字、债务与通胀压力上升。投入完全传导后约形成 " +
+                    CivicBooks.Money(publicInvestment * multiplier) + " 的需求拉动，但审批和施工存在时滞。";
             if (stance == FiscalStance.Contractionary)
                 return "方向：给过热需求降温。风险：短期订单、就业与增长放缓；紧缩过强可能把经济推入衰退。";
             return "保持中性：不主动放大或压低总需求，自动稳定器仍会随经济变化。";
@@ -402,8 +402,8 @@ namespace EconTown
             else
             {
                 m.latestHeadline = "实际 GDP " + (m.gdpGrowth >= 0f ? "增长" : "下降") + " " + Mathf.Abs(m.gdpGrowth).ToString("0.0") + "%";
-                m.latestCausalChain = "C ¥" + m.consumption.ToString("0") + " + I ¥" + m.investment.ToString("0") +
-                    " + G ¥" + m.governmentSpending.ToString("0") + " + NX ¥" + m.netExports.ToString("0") + " = 名义 GDP";
+                m.latestCausalChain = "C " + CivicBooks.Money(m.consumption) + " + I " + CivicBooks.Money(m.investment) +
+                    " + G " + CivicBooks.Money(m.governmentSpending) + " + NX " + CivicBooks.Signed(m.netExports) + " = 名义 GDP";
             }
         }
 

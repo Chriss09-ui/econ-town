@@ -24,7 +24,7 @@ namespace EconTown
             if (policy.type == PolicyType.GreenEquipmentSubsidy) return policy.value.ToString("0") + "%";
             if (policy.type == PolicyType.MinimumWage) return "¥" + policy.value.ToString("0") + "/小时";
             if (policy.type == PolicyType.PublicServiceBudget || policy.type == PolicyType.BasicWelfare)
-                return "¥" + policy.value.ToString("0") + "/周期";
+                return CivicBooks.Money(policy.value) + "/周期";
             if (policy.type == PolicyType.PriceCeiling || policy.type == PolicyType.PriceFloor)
                 return policy.value <= 0f ? "未启用" : "¥" + policy.value.ToString("0");
             return "¥" + policy.value.ToString("0") + "/单位";
@@ -78,10 +78,24 @@ namespace EconTown
             return policy == null ? 0f : policy.value;
         }
 
+        public static string CycleBrief(GovernmentState government)
+        {
+            if (government == null) return "";
+            int cycle = government.history != null && government.history.Count > 0
+                ? government.history[government.history.Count - 1].cycle
+                : government.cycle;
+            return FormatCycleSummary(government, cycle, government.budgetBalance);
+        }
+
         static string BuildCycleSummary(GovernmentState government, float balance)
         {
-            return "第 " + government.cycle + " 个政策周期：财政" +
-                (balance >= 0f ? "盈余 ¥" : "赤字 ¥") + Mathf.Abs(balance).ToString("0") +
+            return FormatCycleSummary(government, government.cycle, balance);
+        }
+
+        static string FormatCycleSummary(GovernmentState government, int cycle, float balance)
+        {
+            return "第 " + cycle + " 个政策周期：财政" +
+                (balance >= 0f ? "盈余 " : "赤字 ") + CivicBooks.Money(Mathf.Abs(balance)) +
                 "，就业率 " + government.employmentRate.ToString("0.0") + "% ，环境 " +
                 government.environmentQuality.ToString("0") + "，支持率 " +
                 government.approvalRating.ToString("0") + "% 。";

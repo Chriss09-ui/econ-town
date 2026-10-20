@@ -604,16 +604,16 @@ namespace EconTown
                     TradeDayRecord trade = InternationalTradeService.LastRecord(state);
                     return trade == null ? "尚无贸易账本记录。" :
                         "汇率 1 B币 = " + ExchangeRateService.Rate(state).ToString("0.00") +
-                        " A币 · 本期出口 ¥" + trade.exportsTotal.ToString("0") +
-                        " · 进口 ¥" + trade.importsTotal.ToString("0") +
-                        " · NX ¥" + trade.netExports.ToString("0");
+                        " A币 · 本期出口 " + CivicBooks.Money(trade.exportsTotal) +
+                        " · 进口 " + CivicBooks.Money(trade.importsTotal) +
+                        " · NX " + CivicBooks.Signed(trade.netExports);
                 case LearningPart.Market:
                     return "平均市场份额 " + (state.AverageMarketShare * 100f).ToString("0.0") + "% · 品牌 " + state.playerBrand.ToString("0");
                 case LearningPart.Resident:
                     return "居民现金 ¥" + state.resident.cash.ToString("0") + " · 储蓄 ¥" + state.resident.savings.ToString("0") +
                         " · 幸福 " + state.resident.happiness.ToString("0");
                 case LearningPart.Government:
-                    return "财政余额 ¥" + state.government.budgetBalance.ToString("0") + " · 债务 ¥" + state.government.debt.ToString("0") +
+                    return "财政余额 " + CivicBooks.Signed(state.government.budgetBalance) + " · 债务 " + CivicBooks.Money(state.government.debt) +
                         " · 支持率 " + state.government.approvalRating.ToString("0") + "%";
                 case LearningPart.Finance:
                     return "存款 ¥" + state.bank.TotalDeposits.ToString("0") + " · 贷款 ¥" + state.bank.PerformingLoans.ToString("0") +
@@ -626,7 +626,7 @@ namespace EconTown
                         " · 镇景指数 " + hs.indexLevel.ToString("0.0") +
                         "（基金 ¥" + (hs.indexUnits * hs.indexLevel / 100f).ToString("0") + "）";
                 default:
-                    return "实际 GDP " + state.macro.realGdp.ToString("0") + " · 通胀 " + state.macro.inflation.ToString("0.0") +
+                    return "实际 GDP " + CivicBooks.Money(state.macro.realGdp) + " · 通胀 " + state.macro.inflation.ToString("0.0") +
                         "% · 失业 " + state.macro.unemploymentRate.ToString("0.0") + "%";
             }
         }

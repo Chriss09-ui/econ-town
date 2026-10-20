@@ -148,7 +148,7 @@ namespace EconTown
             state.economy.worldDay = 137;
             state.macro.history.Add(new MacroPeriodRecord { nominalGdp = 41230f });
             StringAssert.Contains("137", CutsceneService.Caption(state, (int)CutsceneId.Finale));
-            StringAssert.Contains("41230", CutsceneService.Caption(state, (int)CutsceneId.Finale));
+            StringAssert.Contains("4.12亿", CutsceneService.Caption(state, (int)CutsceneId.Finale));
 
             // 每段 2–4 行,且正文包含数字摘要
             for (int id = 1; id <= CutsceneService.Count; id++)

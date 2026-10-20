@@ -234,13 +234,13 @@ namespace EconTown
                 ? state.macro.history[state.macro.history.Count - 1] : null;
             if (macro != null)
             {
-                PutCase(state, "gdp", state.day, "名义 GDP " + macro.nominalGdp.ToString("0") + "，实际 GDP " +
-                    macro.realGdp.ToString("0") + "，增长 " + macro.gdpGrowth.ToString("0.0") + "%。");
+                PutCase(state, "gdp", state.day, "名义 GDP " + CivicBooks.Money(macro.nominalGdp) + "，实际 GDP " +
+                    CivicBooks.Money(macro.realGdp) + "，增长 " + macro.gdpGrowth.ToString("0.0") + "%。");
                 PutCase(state, "inflation", state.day, "CPI " + macro.cpi.ToString("0.0") + "，通胀 " + macro.inflation.ToString("0.0") + "%。");
-                PutCase(state, "unemploymentrate", state.day, "劳动力 " + macro.laborForce + "，失业 " + macro.unemployment +
+                PutCase(state, "unemploymentrate", state.day, "劳动力 " + CivicBooks.Heads(macro.laborForce) + "，失业 " + CivicBooks.Heads(macro.unemployment) +
                     "，失业率 " + macro.unemploymentRate.ToString("0.0") + "%。");
-                PutCase(state, "outputgap", state.day, "实际 GDP " + macro.realGdp.ToString("0") + "，潜在 GDP " +
-                    macro.potentialGdp.ToString("0") + "，产出缺口 " + macro.outputGap.ToString("0.0") + "%。");
+                PutCase(state, "outputgap", state.day, "实际 GDP " + CivicBooks.Money(macro.realGdp) + "，潜在 GDP " +
+                    CivicBooks.Money(macro.potentialGdp) + "，产出缺口 " + macro.outputGap.ToString("0.0") + "%。");
             }
             if (state.bank != null && state.bank.initialized)
             {
@@ -270,21 +270,21 @@ namespace EconTown
                 TradeDayRecord trade = InternationalTradeService.LastRecord(state);
                 if (trade != null)
                 {
-                    PutCase(state, "intl.netexports2", state.day, "本日出口 ¥" + trade.exportsTotal.ToString("0") +
-                        " − 进口 ¥" + trade.importsTotal.ToString("0") + " = NX ¥" + trade.netExports.ToString("0") +
+                    PutCase(state, "intl.netexports2", state.day, "本日出口 " + CivicBooks.Money(trade.exportsTotal) +
+                        " − 进口 " + CivicBooks.Money(trade.importsTotal) + " = NX " + CivicBooks.Signed(trade.netExports) +
                         "（占名义 GDP " + (state.macro != null && state.macro.nominalGdp > 1f
                             ? (Mathf.Abs(trade.netExports) / state.macro.nominalGdp * 100f).ToString("0.0") + "%"
                             : "—") + "）。");
                     PutCase(state, "intl.exports", state.day, "玩家出货 " + trade.playerExportUnits.ToString("0") +
-                        " 杯、收入 ¥" + trade.playerExportRevenue.ToString("0") + "；镇集体商行出口 ¥" +
-                        trade.townExportRevenue.ToString("0") + "。");
-                    PutCase(state, "intl.imports", state.day, "居民进口消费 ¥" + trade.consumerImportSpend.ToString("0") +
-                        "，企业中间投入进口 ¥" + trade.intermediateImportSpend.ToString("0") +
-                        "，关税收入 ¥" + trade.tariffRevenue.ToString("0") + "。");
+                        " 杯、店内实收 ¥" + trade.playerExportRevenue.ToString("0") + "；镇集体商行出口 " +
+                        CivicBooks.Money(trade.townExportRevenue) + "。");
+                    PutCase(state, "intl.imports", state.day, "居民进口消费 " + CivicBooks.Money(trade.consumerImportSpend) +
+                        "，企业中间投入进口 " + CivicBooks.Money(trade.intermediateImportSpend) +
+                        "，关税收入 " + CivicBooks.Money(trade.tariffRevenue) + "。");
                     if (trade.tariffBase > 0.01f)
                         PutCase(state, "intl.tariffrevenue", state.day, "税率 " +
-                            (trade.tariffRateApplied * 100f).ToString("0") + "% × 实际完税进口 ¥" +
-                            trade.tariffBase.ToString("0") + " = 关税收 ¥" + trade.tariffRevenue.ToString("0") + "。");
+                            (trade.tariffRateApplied * 100f).ToString("0") + "% × 实际完税进口 " +
+                            CivicBooks.Money(trade.tariffBase) + " = 关税收 " + CivicBooks.Money(trade.tariffRevenue) + "。");
                 }
                 RateDayRecord rateLast = state.worldTrade.exchangeRate.history.Count > 0
                     ? state.worldTrade.exchangeRate.history[state.worldTrade.exchangeRate.history.Count - 1] : null;
@@ -307,8 +307,8 @@ namespace EconTown
                         "（锚=100）。");
                 if (state.centralBank.forexReservesBCurrency > 0f)
                     PutCase(state, "intl.reserves2", state.day, "外汇储备 " +
-                        state.centralBank.forexReservesBCurrency.ToString("0") + " B币；累计干预 " +
-                        state.centralBank.cumulativeInterventionBCurrency.ToString("0") + " B币、" +
+                        CivicBooks.Foreign(state.centralBank.forexReservesBCurrency) + "；累计干预 " +
+                        CivicBooks.Foreign(state.centralBank.cumulativeInterventionBCurrency) + "、" +
                         state.centralBank.interventionDays + " 天。");
             }
         }
@@ -318,7 +318,8 @@ namespace EconTown
             if (cardId == "crosselasticity") return "完成两组不同竞争价格的营业观测。";
             if (cardId == "marginalproduct" || cardId == "diminishing") return "在企业篇雇佣员工并比较新增产量。";
             if (cardId == "gametheory" || cardId == "nashequilibrium") return "完成价格战选择，并在策略实验室比较至少两种策略。";
-            if (cardId == "publicgood" || cardId == "freerider") return "进入政府篇并完成一次公共品筹资实验。";
+            if (cardId == "publicgood" || cardId == "freerider")
+                return "打开市政厅的「公共建设」，点「运行自愿筹资实验」。";
             if (cardId == "priceceiling" || cardId == "pricefloor") return "在市政府调整价格管制，观察短缺或过剩。";
             if (cardId == "fiscalmultiplier" || cardId == "mpc") return "在宏观篇执行财政实验并观察政策时滞。";
             if (cardId == "housing.bubbleThree" || cardId == "housing.minsky" || cardId == "housing.deleveraging")
