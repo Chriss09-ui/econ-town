@@ -5357,7 +5357,7 @@ namespace EconTown
         static void PaintCutsceneOpening(Texture2D t)
         {
             CutSky(t, new[] { RGB(0xff, 0xe2, 0xb8), RGB(0xff, 0xcf, 0xa0), RGB(0xf2, 0xb8, 0x92) });
-            Rect(t, 37, 165, 7, 7, RGB(0xff, 0xf6, 0xd8)); Rect(t, 34, 162, 13, 13, new Color32(0xff, 0xf2, 0xcc, 90)); // 朝阳
+            Rect(t, 118, 165, 7, 7, RGB(0xff, 0xf6, 0xd8)); Rect(t, 115, 162, 13, 13, new Color32(0xff, 0xf2, 0xcc, 90)); // 朝阳，避开左上角标题
             for (int k = 0; k < 3; k++) Rect(t, 210 + k * 34, 150 - k * 6, 26, 6, RGB(0xff, 0xea, 0xc8));              // 淡云
             Rect(t, 0, 56, 320, 64, RGB(0x8a, 0x9a, 0x78));                                            // 远景树篱
             for (int x = 4; x < 316; x += 11) Rect(t, x, 70 + (x * 7 % 13), 6, 10, RGB(0x6e, 0x82, 0x5c));
@@ -5389,7 +5389,8 @@ namespace EconTown
             Color[] shirts = { RGB(0x54, 0x74, 0x9c), RGB(0xb8, 0x5a, 0x4a), RGB(0x5a, 0x8a, 0x50), RGB(0x9a, 0x6a, 0xb2), RGB(0xc2, 0x92, 0x3c) };
             for (int k = 0; k < crowdX.Length; k++)
             {
-                int px = crowdX[k], py = 18 + k % 3 * 5;
+                // 字幕带盖住画面最底约 37 像素。人站在店门口以上,身体才不会被字幕切成色块。
+                int px = crowdX[k], py = 42 + k % 3 * 3;
                 Rect(t, px, py + 4, 6, 8, shirts[k % shirts.Length]);                                   // 身
                 Rect(t, px + 1, py + 12, 4, 3, RGB(0x3a, 0x32, 0x30));                                 // 头发
                 Rect(t, px + 1, py + 9, 4, 3, RGB(0xe8, 0xc2, 0x9c));                                  // 脸
@@ -5397,7 +5398,7 @@ namespace EconTown
             // 前景:彩带纸屑
             System.Random rng = new System.Random(11);
             for (int k = 0; k < 40; k++)
-                P(t, rng.Next(4, 316), rng.Next(2, 14), k % 3 == 0 ? RGB(0xf2, 0xd4, 0x5a) : k % 3 == 1 ? RGB(0xe2, 0x7a, 0xb8) : RGB(0x7a, 0xc2, 0xd8));
+                P(t, rng.Next(4, 316), rng.Next(46, 108), k % 3 == 0 ? RGB(0xf2, 0xd4, 0x5a) : k % 3 == 1 ? RGB(0xe2, 0x7a, 0xb8) : RGB(0x7a, 0xc2, 0xd8));
         }
 
         // 2 价格战爆发:报纸头版铺满画面(标题文字由打字机层给出,版面只画骨架)
@@ -5499,7 +5500,7 @@ namespace EconTown
         static void PaintCutsceneTradeWar(Texture2D t)
         {
             // 左右分色天空与地面
-            for (int y = 44; y < 180; y++)
+            for (int y = 0; y < 180; y++)
                 for (int x = 0; x < 320; x++)
                 {
                     bool left = x < 130;
@@ -5569,9 +5570,9 @@ namespace EconTown
                 HLine(t, 36, sx + 1, sx + 12, RGB(0x5a, 0x62, 0x6e));                                  // 标签条
                 P(t, sx + 6, 33, k == 2 ? RGB(0xe2, 0x5a, 0x4a) : RGB(0x54, 0xd8, 0x8a));
             }
-            // 左上:「全线完成」红落款
-            Rect(t, 10, 146, 66, 24, new Color32(0xb2, 0x3a, 0x3a, 240)); Frame(t, 10, 146, 66, 24, RGB(0xe8, 0xc8, 0x6a));
-            for (int k = 0; k < 4; k++) Rect(t, 16 + k * 15, 152, 11, 11, RGB(0xf6, 0xe8, 0xc8));      // 印章刻字意象
+            // 「全线完成」红落款放到标题右侧的空天空。原先 x=10、顶到 y=170，正压住左上角档名。
+            Rect(t, 92, 146, 66, 24, new Color32(0xb2, 0x3a, 0x3a, 240)); Frame(t, 92, 146, 66, 24, RGB(0xe8, 0xc8, 0x6a));
+            for (int k = 0; k < 4; k++) Rect(t, 98 + k * 15, 152, 11, 11, RGB(0xf6, 0xe8, 0xc8));      // 印章刻字意象
         }
 
         // ————— V0.9.17 篇间晋升线五段(授予场景,各挂对应篇阶段报告之前) —————
@@ -5612,9 +5613,9 @@ namespace EconTown
             Rect(t, 84, 76, 30, 30, RGB(0x5a, 0x42, 0x2c)); Rect(t, 87, 79, 24, 24, RGB(0xf2, 0xb8, 0x7a));
             // 门前:门垫 + 行李箱 + 钥匙串(渲图修正:门垫加宽、行李箱缩小、钥匙重画为可见尺寸)
             Rect(t, 120, 40, 54, 8, RGB(0x9a, 0x6a, 0x4a)); HLine(t, 43, 122, 172, RGB(0x7a, 0x52, 0x38));
-            Rect(t, 228, 22, 38, 26, RGB(0xa0, 0x6a, 0x40)); Frame(t, 228, 22, 38, 26, RGB(0x6e, 0x46, 0x26));
-            Rect(t, 240, 48, 14, 5, RGB(0x6e, 0x46, 0x26)); VLine(t, 247, 50, 54, RGB(0x6e, 0x46, 0x26));
-            Rect(t, 233, 27, 9, 7, RGB(0xe2, 0x5a, 0x4a)); Rect(t, 245, 30, 7, 5, RGB(0x54, 0x8a, 0xc4)); // 行李贴纸
+            Rect(t, 228, 44, 38, 26, RGB(0xa0, 0x6a, 0x40)); Frame(t, 228, 44, 38, 26, RGB(0x6e, 0x46, 0x26));
+            Rect(t, 240, 70, 14, 5, RGB(0x6e, 0x46, 0x26)); VLine(t, 247, 72, 76, RGB(0x6e, 0x46, 0x26));
+            Rect(t, 233, 49, 9, 7, RGB(0xe2, 0x5a, 0x4a)); Rect(t, 245, 52, 7, 5, RGB(0x54, 0x8a, 0xc4)); // 行李贴纸
             // 钥匙串:金环 + 柄 + 两齿,落在门垫右侧地面上(20×10 可见尺寸)
             Rect(t, 186, 38, 20, 4, RGB(0xd8, 0xb2, 0x4a)); Rect(t, 188, 36, 5, 3, RGB(0xd8, 0xb2, 0x4a));
             Rect(t, 202, 42, 3, 5, RGB(0xd8, 0xb2, 0x4a)); Rect(t, 206, 42, 3, 3, RGB(0xd8, 0xb2, 0x4a));
@@ -5635,10 +5636,11 @@ namespace EconTown
             VLine(t, 160, 168, 178, RGB(0x2c, 0x24, 0x1e));
             Rect(t, 146, 156, 28, 12, RGB(0x3a, 0x30, 0x26)); HLine(t, 157, 152, 168, RGB(0x6a, 0x58, 0x3e));
             Rect(t, 150, 160, 20, 6, RGB(0xd8, 0xb0, 0x6a));                                              // 吊灯暖芯
-            Rect(t, 24, 140, 44, 32, RGB(0x3e, 0x34, 0x2a)); Frame(t, 24, 140, 44, 32, RGB(0x6a, 0x58, 0x3e));
-            Rect(t, 28, 144, 36, 24, RGB(0x8a, 0x82, 0x70));                                              // 挂画:小镇图意象
-            for (int k = 0; k < 3; k++) Rect(t, 32 + k * 11, 148, 7, 8, RGB(0x5a, 0x62, 0x6a));
-            HLine(t, 158, 30, 62, RGB(0x4a, 0x52, 0x5a));
+            // 挂画下移，避开左上角档名。原先顶到 y=172，压住「小镇大事记」。
+            Rect(t, 24, 112, 44, 32, RGB(0x3e, 0x34, 0x2a)); Frame(t, 24, 112, 44, 32, RGB(0x6a, 0x58, 0x3e));
+            Rect(t, 28, 116, 36, 24, RGB(0x8a, 0x82, 0x70));                                              // 挂画:小镇图意象
+            for (int k = 0; k < 3; k++) Rect(t, 32 + k * 11, 120, 7, 8, RGB(0x5a, 0x62, 0x6a));
+            HLine(t, 130, 30, 62, RGB(0x4a, 0x52, 0x5a));
             // 窗(渲图三稿:夜景靠对比度——窗洞提亮成夜空蓝灰、窗框 3px 亮棕、星点纯白,
             // 否则深蓝墙上画深蓝窗等于没有窗)
             Rect(t, 206, 64, 82, 62, RGB(0x8a, 0x6a, 0x44));                                             // 窗框(亮棕粗框)
@@ -5677,6 +5679,7 @@ namespace EconTown
         static void PaintCutsceneBureau(Texture2D t)
         {
             CutSky(t, new[] { RGB(0xc8, 0xdc, 0xe8), RGB(0xb2, 0xca, 0xdc), RGB(0x9a, 0xb8, 0xd0) });    // 晨光
+            Rect(t, 0, 0, 320, 58, RGB(0x4a, 0x36, 0x24));                                              // 窗下室内,底边不再透出游戏
             Rect(t, 0, 58, 320, 62, RGB(0x8e, 0xa4, 0x74));                                              // 镇区绿地
             for (int x = 10; x < 320; x += 48) VLine(t, x, 58, 112, RGB(0xb2, 0xb4, 0xa2));              // 纵街
             HLine(t, 100, 0, 319, RGB(0xb2, 0xb4, 0xa2)); HLine(t, 76, 0, 319, RGB(0xb2, 0xb4, 0xa2));   // 横街
@@ -5696,11 +5699,11 @@ namespace EconTown
                 HLine(t, by, bx, bx + 5, RGB(0x7a, 0x82, 0x8a)); HLine(t, by - 2, bx + 5, bx + 10, RGB(0x7a, 0x82, 0x8a));
                 HLine(t, by - 4, bx + 6, bx + 9, RGB(0x7a, 0x82, 0x8a));
             }
-            // 窗框:粗木十字(前景)
-            for (int x = 0; x < 320; x++) { P(t, x, 176, RGB(0x5a, 0x42, 0x2c)); P(t, x, 172, RGB(0x6a, 0x4e, 0x34)); }
+            // 窗框上沿降到档名下面。原先横木画到 y=176，整条压住左上角标题。
+            for (int x = 0; x < 320; x++) { P(t, x, 164, RGB(0x5a, 0x42, 0x2c)); P(t, x, 160, RGB(0x6a, 0x4e, 0x34)); }
             for (int x = 0; x < 320; x++) { P(t, x, 0, RGB(0x4a, 0x36, 0x24)); P(t, x, 4, RGB(0x5a, 0x42, 0x2c)); }
-            VLine(t, 158, 0, 180, RGB(0x5a, 0x42, 0x2c)); VLine(t, 162, 0, 180, RGB(0x4a, 0x36, 0x24));
-            Rect(t, 0, 118, 320, 54, RGB(0x5e, 0x46, 0x30)); HLine(t, 118, 0, 319, RGB(0x7a, 0x5c, 0x3c)); // 窗台
+            VLine(t, 158, 0, 164, RGB(0x5a, 0x42, 0x2c)); VLine(t, 162, 0, 164, RGB(0x4a, 0x36, 0x24));
+            Rect(t, 0, 118, 320, 42, RGB(0x5e, 0x46, 0x30)); HLine(t, 118, 0, 319, RGB(0x7a, 0x5c, 0x3c)); // 窗台，顶边停在 y=159
             // 升起的报表三张:柱图/折线/表格,错落上浮(微观→宏观的视觉隐喻)
             PaintRisingSheet(t, 26, 84, 74, 46, 0);
             PaintRisingSheet(t, 108, 100, 84, 40, 2);
@@ -5765,7 +5768,7 @@ namespace EconTown
         static void PaintCutsceneHomecoming(Texture2D t)
         {
             CutSky(t, new[] { RGB(0xff, 0xb4, 0x78), RGB(0xe8, 0x84, 0x6a), RGB(0xa4, 0x6a, 0x84) });    // 晚霞
-            Rect(t, 40, 150, 12, 12, RGB(0xff, 0xf0, 0xc0)); Rect(t, 34, 144, 24, 24, new Color32(0xff, 0xd8, 0x9a, 90)); // 沉日
+            Rect(t, 118, 150, 12, 12, RGB(0xff, 0xf0, 0xc0)); Rect(t, 112, 144, 24, 24, new Color32(0xff, 0xd8, 0x9a, 90)); // 沉日，避开左上角标题
             // 渲图修正:霞带 4→2 条(等距横条像百叶窗,减两条让天空透气)
             Rect(t, 50, 138, 46, 5, RGB(0xf6, 0xc0, 0x94)); Rect(t, 178, 133, 52, 5, RGB(0xf6, 0xc0, 0x94));
             // 远处右:港口塔吊与桅杆剪影
@@ -5786,12 +5789,12 @@ namespace EconTown
             Rect(t, 120, 118, 24, 10, RGB(0x74, 0x52, 0x34)); Rect(t, 123, 120, 18, 6, RGB(0xf6, 0xe8, 0xc8)); // 门牌
             // 门前:门垫 + 房契 + 钥匙(渲图修正:钥匙重画为可见尺寸,落在房契左下地面上)
             Rect(t, 70, 30, 54, 9, RGB(0x9a, 0x6a, 0x4a)); HLine(t, 33, 72, 122, RGB(0x7a, 0x52, 0x38));
-            Rect(t, 180, 22, 62, 40, RGB(0xf6, 0xf0, 0xdc)); Frame(t, 180, 22, 62, 40, RGB(0xb2, 0xa4, 0x8a));
-            for (int k = 0; k < 4; k++) HLine(t, 30 + k * 7, 186, 236, RGB(0xc2, 0xba, 0xa4));
-            Rect(t, 218, 24, 14, 10, RGB(0xb2, 0x3a, 0x3a));                                             // 房契红章
-            Rect(t, 164, 40, 20, 4, RGB(0xd8, 0xb2, 0x4a)); Rect(t, 166, 38, 5, 3, RGB(0xd8, 0xb2, 0x4a));
-            Rect(t, 180, 44, 3, 5, RGB(0xd8, 0xb2, 0x4a)); Rect(t, 184, 44, 3, 3, RGB(0xd8, 0xb2, 0x4a));
-            Rect(t, 165, 41, 18, 2, RGB(0xf6, 0xe0, 0x9a));                                              // 金钥匙高光
+            Rect(t, 180, 48, 62, 40, RGB(0xf6, 0xf0, 0xdc)); Frame(t, 180, 48, 62, 40, RGB(0xb2, 0xa4, 0x8a));
+            for (int k = 0; k < 4; k++) HLine(t, 56 + k * 7, 186, 236, RGB(0xc2, 0xba, 0xa4));
+            Rect(t, 218, 50, 14, 10, RGB(0xb2, 0x3a, 0x3a));                                             // 房契红章
+            Rect(t, 164, 66, 20, 4, RGB(0xd8, 0xb2, 0x4a)); Rect(t, 166, 64, 5, 3, RGB(0xd8, 0xb2, 0x4a));
+            Rect(t, 180, 70, 3, 5, RGB(0xd8, 0xb2, 0x4a)); Rect(t, 184, 70, 3, 3, RGB(0xd8, 0xb2, 0x4a));
+            Rect(t, 165, 67, 18, 2, RGB(0xf6, 0xe0, 0x9a));                                              // 金钥匙高光
         }
 
         // ————— V0.7.4 过场动效小精灵(§149:每段 1–2 处内动效,代码驱动) —————

@@ -185,29 +185,22 @@ namespace EconTown
         {
             GameState s = GameState.I;
             if (s == null) return;
-            GameObject root = BeginPanel("第二篇 · 新的创业者", 720, 600);
+            GameObject root = BeginPanel("第二篇 · 新的创业者", 760f, 640f);
             RectTransform c = ContentOf(root);
-            string body =
-                "镇东的 <b>Sunny Tea</b> 今天开业了。\n\n" +
-                "昨天以前，居民想喝饮料时只能来你的店。现在他们会在两家店之间比较：\n\n" +
-                "• 价格是否划算\n• 品质是否更好\n• 品牌是否值得信任\n\n" +
-                "从今天开始，你不只要问“卖多少钱最赚钱”，还要问：\n\n" +
-                "<color=#e8a84c>如果我这样做，对手会怎么回应？</color>\n\n" +
-                "市场中心已经开放。先营业一天，看看原来的顾客去了哪里。";
-            Text t = UiTheme.MakeText(c, body, 23, UiTheme.TextMain, TextAnchor.UpperLeft);
-            t.rectTransform.Stretch();
-            t.rectTransform.offsetMin = new Vector2(10, 84);
-            FitTextAboveFooter(t);
+            const float width = 712f;
+            float y = EventBrief(c, "镇东的店今天开业",
+                "Sunny Tea 开业了。昨天以前，想喝饮料的人只能来你的店。\n\n" +
+                "现在他们会比较三件事：价格是否划算，品质是否更好，品牌是否值得信任。\n\n" +
+                "先营业一天，再去市场中心看原来的顾客去了哪里。",
+                0f, 0f, width, UiTheme.Market) + 20f;
             Button ok = UiTheme.MakeButton(c, "迎接竞争", () =>
             {
                 ProgressionService.RecordSignal(s, ProgressSignals.CompetitorOpened,
                     "Sunny Tea 开业", "饮品市场从单店进入双店竞争");
                 ClosePanel(root);
-            }, 23);
-            ok.rectTransform().anchorMin = ok.rectTransform().anchorMax = new Vector2(0.5f, 0);
-            ok.rectTransform().pivot = new Vector2(0.5f, 0f);
-            ok.rectTransform().anchoredPosition = new Vector2(0, 8);
-            ok.rectTransform().sizeDelta = new Vector2(240, 52);
+            }, 22);
+            PlaceTopLeft(ok.rectTransform(), (width - 240f) * .5f, y, 240f, 52f);
+            FitEventPanel(root, y + 52f);
         }
 
         public void ShowPriceWarChoice()
@@ -215,26 +208,24 @@ namespace EconTown
             GameState s = GameState.I;
             if (s == null || !s.CompetitionActive) return;
             SaveSystem.SaveKeyMoment(s, "关键选择：价格战");
-            GameObject root = BeginPanel("市场警报 · Sunny Tea 突然降价", 760, 700);
+            GameObject root = BeginPanel("市场警报 · Sunny Tea 突然降价", 760f, 720f);
             MarkMandatoryDecision(root);
+            HideFalseClose(root);
             RectTransform c = ContentOf(root);
-            Text intro = UiTheme.MakeText(c,
-                "Sunny Tea 把价格降到了 " + s.competitor.price.ToString("0") + " 元。\n如果你保持当前价格 " + PriceService.PlayerListedPrice(s).ToString("0") + " 元，部分顾客可能转向对手。你准备怎么回应？",
-                23, UiTheme.TextMain, TextAnchor.UpperLeft);
-            intro.rectTransform.anchorMin = intro.rectTransform.anchorMax = new Vector2(0, 1);
-            intro.rectTransform.pivot = new Vector2(0, 1);
-            intro.rectTransform.anchoredPosition = new Vector2(8, -4);
-            intro.rectTransform.sizeDelta = new Vector2(700, 120);
-            float introShift = ExpandTopText(intro);
-            GrowPanel(root, introShift);
+            const float width = 712f;
+            float y = EventBrief(c, "两边现在的价格",
+                "Sunny Tea 降到了 ¥" + s.competitor.price.ToString("0") +
+                "，你的标价是 ¥" + PriceService.PlayerListedPrice(s).ToString("0") +
+                "。保持不动的话，一部分客人会去对面。",
+                0f, 0f, width, UiTheme.Accent) + 16f;
 
-            StrategyChoiceButton(c, 0, 135f + introShift, "A  跟随降价", "抢回份额，但每杯利润变薄", () =>
+            StrategyChoiceButton(c, 0, y, "跟随降价", "抢回份额，但每杯利润变薄", () =>
             {
                 s.price = s.competitor.price;
                 s.todayStrategyChoice = PlayerCompetitionChoice.FollowPrice.ToString();
                 s.Changed(); ResolveMandatoryDecision(root);
             });
-            StrategyChoiceButton(c, 1, 135f + introShift, "B  保持价格", "接受部分顾客流失，守住单杯利润", () =>
+            StrategyChoiceButton(c, 1, y, "保持价格", "接受部分顾客流失，守住单杯利润", () =>
             {
                 s.todayStrategyChoice = PlayerCompetitionChoice.HoldPrice.ToString();
                 s.Changed(); ResolveMandatoryDecision(root);
@@ -242,7 +233,7 @@ namespace EconTown
             int nextQuality = Mathf.Min(3, s.playerQualityLevel + 1);
             float qualityCost = CompetitionEco.UpgradeCost(nextQuality);
             bool canUpgrade = s.playerQualityLevel < 3 && s.money >= qualityCost;
-            Button qualityChoice = StrategyChoiceButton(c, 2, 135f + introShift, "C  提高品质",
+            Button qualityChoice = StrategyChoiceButton(c, 2, y, "提高品质",
                 canUpgrade ? "用差异化回应 · 成本 ¥" + qualityCost.ToString("0") :
                     s.playerQualityLevel >= 3 ? "品质已满级" : "资金不足 · 需要 ¥" + qualityCost.ToString("0"), () =>
             {
@@ -254,7 +245,7 @@ namespace EconTown
             });
             qualityChoice.interactable = canUpgrade;
             bool canAdvertise = s.money >= 300f;
-            Button advertiseChoice = StrategyChoiceButton(c, 3, 135f + introShift, "D  增加广告",
+            Button advertiseChoice = StrategyChoiceButton(c, 3, y, "增加广告",
                 canAdvertise ? "花 ¥300 提高品牌与客流" : "资金不足 · 需要 ¥300", () =>
             {
                 s.marketingBudget = Mathf.Max(300f, s.marketingBudget);
@@ -262,16 +253,12 @@ namespace EconTown
                 s.Changed(); ResolveMandatoryDecision(root);
             });
             advertiseChoice.interactable = canAdvertise;
+            FitEventPanel(root, y + 4f * 100f);
         }
 
         Button StrategyChoiceButton(RectTransform c, int index, float top, string title, string desc, System.Action action)
         {
-            Button b = UiTheme.MakeButton(c, title + "\n<size=17>" + desc + "</size>", action, 21);
-            b.rectTransform().anchorMin = b.rectTransform().anchorMax = new Vector2(0.5f, 1);
-            b.rectTransform().pivot = new Vector2(0.5f, 1);
-            b.rectTransform().anchoredPosition = new Vector2(0, -(top + index * 94));
-            b.rectTransform().sizeDelta = new Vector2(650, 82);
-            return b;
+            return EventChoice(c, title, desc, 0f, top + index * 100f, 712f, action);
         }
 
         public void ShowStrategyLab()

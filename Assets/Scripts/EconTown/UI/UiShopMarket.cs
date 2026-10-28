@@ -489,53 +489,57 @@ namespace EconTown
         {
             GameState s = GameState.I;
             if (s == null) return;
-            GameObject root = BeginPanel("小镇广场 · 公告栏", 600, 480);
+            GameObject root = BeginPanel("小镇广场 · 公告栏", 720f, 520f);
             RectTransform c = ContentOf(root);
+            const float width = 672f;
 
-            string body;
             TownEvent ev = DaySimulator.LastEvent;
-            if (!string.IsNullOrEmpty(s.todayEventName) && ev != null && ev.name == s.todayEventName)
+            bool hasEvent = !string.IsNullOrEmpty(s.todayEventName) && ev != null && ev.name == s.todayEventName;
+            float y = EventBrief(c, hasEvent ? ev.name : "今天没有特别的事",
+                hasEvent ? ev.desc : "居民照常生活：学生上学、白领上班、游客拍照。",
+                0f, 0f, width, UiTheme.Accent) + 16f;
+
+            if (hasEvent)
             {
-                body = "📌 今日小镇事件:" + ev.name + "\n\n" + ev.desc + "\n\n想一想:这件事会让你的需求曲线“移动”,还是沿曲线移动?";
-            }
-            else
-            {
-                body = "📌 今天小镇风平浪静。\n\n居民们照常生活:学生上学、白领上班、游客拍照。\n平静的日子适合观察“正常”的需求数据。";
+                Text ask = UiTheme.MakeText(c, "这件事让来买的人变多或变少了，还是只让同一群人沿价格换了选择？",
+                    16, UiTheme.TextSub, TextAnchor.UpperLeft);
+                PlaceTopLeft(ask.rectTransform, 0f, y, width, 48f);
+                y += 56f;
             }
 
-            float historySat = 0f, sevenDaySat = 0f;
             int n = s.history.Count;
-            int sevenStart = Mathf.Max(0, n - 7);
-            for (int i = 0; i < n; i++)
-            {
-                historySat += s.history[i].satisfaction;
-                if (i >= sevenStart) sevenDaySat += s.history[i].satisfaction;
-            }
             if (n > 0)
             {
+                float historySat = 0f, sevenDaySat = 0f;
+                int sevenStart = Mathf.Max(0, n - 7);
+                for (int i = 0; i < n; i++)
+                {
+                    historySat += s.history[i].satisfaction;
+                    if (i >= sevenStart) sevenDaySat += s.history[i].satisfaction;
+                }
                 int sevenCount = n - sevenStart;
-                body += "\n\n今日顾客满意度：" + s.history[n - 1].satisfaction.ToString("0") +
-                    "  ·  7 日平均：" + (sevenDaySat / sevenCount).ToString("0") +
-                    "  ·  历史平均：" + (historySat / n).ToString("0");
+                Text sat = UiTheme.MakeText(c,
+                    "顾客满意度    今日 " + s.history[n - 1].satisfaction.ToString("0") +
+                    "    近 7 日 " + (sevenDaySat / sevenCount).ToString("0") +
+                    "    开业以来 " + (historySat / n).ToString("0"),
+                    16, UiTheme.TextSub, TextAnchor.MiddleLeft);
+                PlaceTopLeft(sat.rectTransform, 0f, y, width, 28f);
+                y += 36f;
             }
 
-            // V0.7.1 橱窗档位切换当日的对冲提示(PRD §125):防止学生把橱窗变暗/转让牌误读成倒闭公告
             var atm = s.economy != null ? s.economy.atmosphere : null;
             if (atm != null && atm.windowTierChangedToday)
-                body += "\n\n镇上商铺经营情绪：" + s.government.enterpriseConfidence.ToString("0") +
-                    " ——橱窗与木牌是情绪，不是倒闭公告。";
-
-            Text t = UiTheme.MakeText(c, body, 22, UiTheme.TextMain, TextAnchor.UpperLeft);
-            t.rectTransform.Stretch();
-            t.rectTransform.offsetMin = new Vector2(8f, 72f);
-            t.rectTransform.offsetMax = new Vector2(-8f, -8f);
-            FitTextAboveFooter(t);
+            {
+                Text mood = UiTheme.MakeText(c,
+                    "商铺经营情绪 " + s.government.enterpriseConfidence.ToString("0") + "。橱窗和木牌是情绪，不是倒闭。",
+                    16, UiTheme.TextSub, TextAnchor.UpperLeft);
+                PlaceTopLeft(mood.rectTransform, 0f, y, width, 48f);
+                y += 56f;
+            }
 
             Button ok = UiTheme.MakeButton(c, "关闭", CloseTop, 21);
-            ok.rectTransform().anchorMin = ok.rectTransform().anchorMax = new Vector2(0.5f, 0);
-            ok.rectTransform().pivot = new Vector2(0.5f, 0f);
-            ok.rectTransform().anchoredPosition = new Vector2(0, 6);
-            ok.rectTransform().sizeDelta = new Vector2(200, 50);
+            PlaceTopLeft(ok.rectTransform(), (width - 200f) * .5f, y, 200f, 50f);
+            FitEventPanel(root, y + 50f);
         }
     }
 

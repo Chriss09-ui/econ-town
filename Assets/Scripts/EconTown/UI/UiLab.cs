@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace EconTown
@@ -14,6 +15,9 @@ namespace EconTown
         MortgageStressResult housingStressResult;
         BubbleExperimentResult housingBubbleResult;
         float housingLabHikePp = 2f;
+
+        string settingsHint = "";
+        Text settingsHintLine;
 
         bool ChartAutoScale
         {
@@ -832,78 +836,81 @@ namespace EconTown
             GameObject root = BeginPanel("设置 · " + GameState.Version, 920, 760);
             RectTransform c = ContentOf(root);
 
-            RectTransform learning = ExperienceCard(c, "游玩与教学", 8f, 0f, 420f, 480f, UiTheme.Accent);
-            SettingRow(learning, "难度模式", LongTermExperienceService.DifficultyName(settings.difficulty), 42f, () =>
+            RectTransform learning = ExperienceCard(c, "游玩与教学", 8f, 0f, 420f, 280f, UiTheme.Accent);
+            SettingRow(learning, "难度模式", LongTermExperienceService.DifficultyName(settings.difficulty), 42f,
+                "教学少噪声，模拟冲击更勤，规律不变", () =>
             {
                 settings.difficulty = (DifficultyMode)(((int)settings.difficulty + 1) % 3);
                 ReloadSettings(root);
             });
-            SettingRow(learning, "解释详细度", LongTermExperienceService.GuidanceName(settings.guidance), 102f, () =>
+            SettingRow(learning, "解释详细度", LongTermExperienceService.GuidanceName(settings.guidance), 102f,
+                "报告和提示写到这一层", () =>
             {
                 settings.guidance = (GuidanceLevel)(((int)settings.guidance + 1) % 3);
                 ReloadSettings(root);
             });
-            SettingRow(learning, "事件频率", settings.eventFrequency.ToString("0.00") + "×", 162f, () =>
+            SettingRow(learning, "事件频率", settings.eventFrequency.ToString("0.00") + "×", 162f,
+                "镇上随机事件的疏密", () =>
             {
                 settings.eventFrequency = settings.eventFrequency >= 1.5f ? .5f : settings.eventFrequency + .5f;
                 ReloadSettings(root);
             });
-            SettingRow(learning, "竞争强度", settings.competitionIntensity.ToString("0.0") + "×", 222f, () =>
+            SettingRow(learning, "竞争强度", settings.competitionIntensity.ToString("0.0") + "×", 222f,
+                "对手压价、抢客的力度", () =>
             {
                 settings.competitionIntensity = settings.competitionIntensity >= 1.5f ? .5f : settings.competitionIntensity + .5f;
                 ReloadSettings(root);
             });
-            ExperienceText(learning,
-                settings.difficulty == DifficultyMode.Teaching ? "教学模式降低噪声，不改变经济规律。" :
-                settings.difficulty == DifficultyMode.Simulation ? "模拟模式增加冲击频率，适合重复游玩。" :
-                "标准模式启用完整机制与常规随机波动。",
-                16, 18f, 306f, 384f, 70f, UiTheme.TextSub, TextAnchor.MiddleCenter);
 
-            RectTransform display = ExperienceCard(c, "显示、声音与存档", 448f, 0f, 420f, 560f, UiTheme.Market);
-            // V0.7.1 新增双开关,七行重排:步进 60→50,页脚下移(呈现层开关见 §127)
-            SettingRow(display, "图表自动缩放", settings.chartAutoScale ? "开启" : "关闭", 42f, () =>
+            RectTransform display = ExperienceCard(c, "显示、声音与存档", 448f, 0f, 420f, 450f, UiTheme.Market);
+            SettingRow(display, "图表自动缩放", settings.chartAutoScale ? "开启" : "关闭", 42f,
+                "折线图纵轴跟着数据收放", () =>
             {
                 settings.chartAutoScale = !settings.chartAutoScale;
                 ReloadSettings(root);
             });
             // 围猎三#4/#20:该设置唯一消费点是折线图轴刻度(PolylineGraph.FormatAxis),
             // HUD 与各面板始终显示完整数字——文案按实际作用面改述,不扩大实现面。
-            SettingRow(display, "图表数值单位", settings.numericUnit, 92f, () =>
+            SettingRow(display, "图表数值单位", settings.numericUnit, 92f,
+                "只缩折线图的轴，金额仍写全", () =>
             {
                 settings.numericUnit = settings.numericUnit == "自动" ? "完整数值" : settings.numericUnit == "完整数值" ? "万/亿" : "自动";
                 ReloadSettings(root);
             });
             int volume = Mathf.RoundToInt(AudioListener.volume * 100f);
-            SettingRow(display, "音量", volume + "%", 142f, () =>
+            SettingRow(display, "音量", volume + "%", 142f, "整个游戏的音量", () =>
             {
                 AudioListener.volume = AudioListener.volume >= .99f ? 0f : Mathf.Clamp01(AudioListener.volume + .25f);
                 PlayerPrefs.SetFloat("EconTown.Volume", AudioListener.volume);
                 ReloadSettings(root);
             });
-            SettingRow(display, "自动存档", settings.autoSave ? "开启" : "关闭", 192f, () =>
+            SettingRow(display, "自动存档", settings.autoSave ? "开启" : "关闭", 192f,
+                "清晨自动记下进度", () =>
             {
                 settings.autoSave = !settings.autoSave;
                 ReloadSettings(root);
             });
-            SettingRow(display, "氛围效果", settings.atmosphereEffects ? "开启" : "关闭", 242f, () =>
+            SettingRow(display, "氛围效果", settings.atmosphereEffects ? "开启" : "关闭", 242f,
+                "时段、季节和过场；关闭则跳过过场", () =>
             {
                 settings.atmosphereEffects = !settings.atmosphereEffects;
                 ReloadSettings(root);
             });
-            SettingRow(display, "经济状态可视化", settings.ecoVisibility ? "开启" : "关闭", 292f, () =>
+            SettingRow(display, "经济状态可视化", settings.ecoVisibility ? "开启" : "关闭", 292f,
+                "街上的人、橱窗和价目牌跟着经营变", () =>
             {
                 settings.ecoVisibility = !settings.ecoVisibility;
                 ReloadSettings(root);
             });
-            SettingRow(display, "港口演出", settings.fullPortAnimations ? "完整" : "精简", 342f, () =>
+            SettingRow(display, "港口演出", settings.fullPortAnimations ? "完整" : "精简", 342f,
+                "精简时码头直接停在靠泊", () =>
             {
                 settings.fullPortAnimations = !settings.fullPortAnimations;
                 ReloadSettings(root);
             });
-            SettingRow(display, "显示缩放", "随窗口自适应", 392f, () => ShowToast("界面以 1280×720 为设计基准，自动适配当前窗口"));
-            ExperienceText(display,
-                "图表数值单位=仅折线图轴刻度的万/亿缩略,HUD 与面板始终显示完整数字。\n氛围效果=时段色调/季节/天气/演出/剧情过场(关闭后过场视为已看、直接放行后续弹窗)；港口精简模式永远直接显示停泊态。\n经济状态可视化=街景人数/橱窗/价目牌——它们是经济状态的仪表。\nWASD/方向键移动 · E 互动 · Esc 关闭窗口/跳过过场",
-                14, 16f, 446f, 390f, 100f, UiTheme.TextSub, TextAnchor.MiddleLeft);
+            SettingRow(display, "显示缩放", "随窗口自适应", 392f,
+                "按 1280×720 适配窗口", () => { });
+            settingsHintLine = ExperienceText(c, settingsHint, 16, 8f, 462f, 860f, 32f, UiTheme.TextSub, TextAnchor.MiddleLeft);
 
             Button save = UiTheme.MakeButton(c, "手动保存", () =>
             {
@@ -1002,12 +1009,31 @@ namespace EconTown
                 15, 8f, 636f, 860f, 28f, UiTheme.TextSub, TextAnchor.MiddleCenter);
         }
 
-        void SettingRow(RectTransform parent, string label, string value, float y, System.Action action)
+        void SettingRow(RectTransform parent, string label, string value, float y, string hint, System.Action action)
         {
             ExperienceText(parent, label, 17, 18f, y, 180f, 42f, UiTheme.TextMain, TextAnchor.MiddleLeft, FontStyle.Bold);
-            Button button = UiTheme.MakeButton(parent, value, action, 17);
+            Button button = UiTheme.MakeButton(parent, value, () =>
+            {
+                settingsHint = hint;
+                if (settingsHintLine != null) settingsHintLine.text = hint;
+                if (action != null) action();
+            }, 17);
             PlaceTopLeft(button.rectTransform(), 214f, y, 184f, 42f);
             UiTheme.SetButtonStyle(button, UiTheme.Paper, UiTheme.Ink);
+
+            EventTrigger trigger = button.gameObject.AddComponent<EventTrigger>();
+            EventTrigger.Entry enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+            enter.callback.AddListener(_ =>
+            {
+                if (settingsHintLine != null) settingsHintLine.text = hint;
+            });
+            EventTrigger.Entry exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+            exit.callback.AddListener(_ =>
+            {
+                if (settingsHintLine != null) settingsHintLine.text = settingsHint;
+            });
+            trigger.triggers.Add(enter);
+            trigger.triggers.Add(exit);
         }
 
         void ReloadSettings(GameObject root)

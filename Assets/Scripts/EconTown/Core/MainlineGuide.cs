@@ -33,6 +33,7 @@ namespace EconTown
         public struct Cue
         {
             public string line;
+            public string detail;
             public MainlineDestination destination;
             public int tab;
             public int dockIndex;
@@ -316,7 +317,13 @@ namespace EconTown
                 case ProgressSignals.LaborLeisure:
                     return Line("打开「生活」，去工作或休息一次，然后结束今天", MainlineDestination.Resident);
                 case ProgressSignals.GovernmentOpened:
-                    return Line("打开市政厅的财政总览，做一次公共品实验", MainlineDestination.Government, 0);
+                    return Line("去「公共建设」，点「运行自愿筹资实验」", MainlineDestination.Government, 5,
+                        "这一步不在「财政总览」。\n" +
+                        "1. 点屏幕底部的「市政」。清晨卡片上的「去做」会直接打开「公共建设」。\n" +
+                        "2. 若停在别的页，看顶上那一排，点「公共建设」。左边那张卡片叫「免费搭便车实验」。\n" +
+                        "3. 实验是这样的：20 位居民都想在街上装路灯，要自愿凑满 ¥1000。每个人可以出钱，也可以等别人出。\n" +
+                        "4. 点卡片上的「运行自愿筹资实验」。这一下不花政府的钱，也不改税。\n" +
+                        "5. 看出资人数和募集到的金额。路灯装上以后，没出钱的人也能用，所以很多人会等别人付钱，钱通常凑不满。看完这一页，本章就完成。");
                 case ProgressSignals.ExternalityPolicy:
                     return Line("打开市政厅的环境治理，用一次污染治理政策", MainlineDestination.Government, 4);
                 case ProgressSignals.TaxPolicy:
@@ -409,9 +416,9 @@ namespace EconTown
             }
         }
 
-        static Cue Line(string line, MainlineDestination destination, int tab = 0)
+        static Cue Line(string line, MainlineDestination destination, int tab = 0, string detail = null)
         {
-            return new Cue { line = line, destination = destination, tab = tab, dockIndex = -1 };
+            return new Cue { line = line, detail = detail, destination = destination, tab = tab, dockIndex = -1 };
         }
 
         static int ListedPriceKinds(GameState state)

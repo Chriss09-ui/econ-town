@@ -16,20 +16,21 @@ namespace EconTown
             RectTransform content = ContentOf(root);
 
             LongTermEventRecord currentEvent = state.experience.todayLongTermEvent;
-            RectTransform eventCard = ExperienceCard(content, "今日世界状态", 8f, 0f, 976f, 94f,
-                currentEvent == null ? UiTheme.Market : UiTheme.Accent);
-            ExperienceText(eventCard, currentEvent == null
-                    ? "没有新的长期事件。企业、居民、政府与宏观系统仍在照常运行。"
-                    : "<b>" + currentEvent.title + "</b>　" + currentEvent.effect + "\n原因：" + currentEvent.cause,
-                18, 16f, 36f, 944f, 48f, currentEvent == null ? UiTheme.TextSub : UiTheme.TextMain);
+            float briefH = EventBrief(content,
+                currentEvent == null ? "今天没有新的长期事件" : currentEvent.title,
+                currentEvent == null
+                    ? "企业、居民、政府与宏观仍在照常运行。"
+                    : currentEvent.effect + "\n" + currentEvent.cause,
+                8f, 0f, 976f, currentEvent == null ? UiTheme.Market : UiTheme.Accent);
+            float y = briefH + 16f;
 
-            RectTransform todos = ExperienceCard(content, "今日待办 · 可以忽略", 8f, 110f, 478f, 330f, UiTheme.Market);
+            RectTransform todos = ExperienceCard(content, "今天可以做的事", 8f, y, 478f, 300f, UiTheme.Market);
             IList<string> todoItems = LongTermExperienceService.BuildTodayTodos(state);
             StringBuilder todoText = new StringBuilder();
             for (int i = 0; i < todoItems.Count; i++) todoText.Append("• ").Append(todoItems[i]).Append('\n').Append('\n');
             ExperienceText(todos, todoText.ToString(), 18, 18f, 42f, 442f, 256f, UiTheme.TextMain);
 
-            RectTransform news = ExperienceCard(content, "最新新闻 · 真实数据生成", 506f, 110f, 478f, 330f, UiTheme.Accent);
+            RectTransform news = ExperienceCard(content, "最新新闻", 506f, y, 478f, 300f, UiTheme.Accent);
             if (state.experience.news.Count == 0)
                 ExperienceText(news, "完成几次结算后，这里会根据真实利润、通胀、失业、债务与事件生成新闻。",
                     18, 18f, 54f, 442f, 90f, UiTheme.TextSub);
@@ -46,19 +47,21 @@ namespace EconTown
                 }
             }
 
-            string crisisLine = "企业恢复：" + (state.experience.enterpriseRecovery.active
+            string crisisLine = "企业  " + (state.experience.enterpriseRecovery.active
                 ? state.experience.enterpriseRecovery.latestStatus : "正常") +
-                "　居民：" + (state.experience.residentCrisisActive ? "生活危机" : "正常") +
-                "　财政：" + (state.experience.fiscalPressureActive ? "压力" : "正常") +
-                "　宏观：" + state.experience.macroCrisisStatus;
-            RectTransform status = ExperienceCard(content, "危机与恢复", 8f, 456f, 976f, 92f,
+                "\n居民  " + (state.experience.residentCrisisActive ? "生活危机" : "正常") +
+                "    财政  " + (state.experience.fiscalPressureActive ? "压力" : "正常") +
+                "    宏观  " + state.experience.macroCrisisStatus;
+            float statusY = y + 316f;
+            RectTransform status = ExperienceCard(content, "危机与恢复", 8f, statusY, 976f, 108f,
                 state.experience.enterpriseRecovery.active || state.experience.residentCrisisActive ? UiTheme.Bad : UiTheme.Good);
-            ExperienceText(status, crisisLine, 17, 16f, 38f, 944f, 40f, UiTheme.TextMain);
+            ExperienceText(status, crisisLine, 17, 16f, 36f, 944f, 62f, UiTheme.TextMain);
 
+            float buttonY = statusY + 124f;
             Button allNews = UiTheme.MakeButton(content, "新闻中心", () => { ClosePanel(root); ShowNewsCenter(); }, 18);
-            PlaceTopLeft(allNews.rectTransform(), 100f, 566f, 180f, 48f);
+            PlaceTopLeft(allNews.rectTransform(), 100f, buttonY, 180f, 48f);
             Button history = UiTheme.MakeButton(content, "小镇经济史", () => { ClosePanel(root); ShowEconomicHistory(); }, 18);
-            PlaceTopLeft(history.rectTransform(), 302f, 566f, 180f, 48f);
+            PlaceTopLeft(history.rectTransform(), 302f, buttonY, 180f, 48f);
             Button crisis = UiTheme.MakeButton(content,
                 state.experience.residentCrisisActive ? "处理生活危机" : state.experience.enterpriseRecovery.active ? "查看恢复计划" : "危机复盘",
                 () =>
@@ -68,9 +71,10 @@ namespace EconTown
                     else if (state.experience.enterpriseRecovery.active) ShowFinancialCrisis();
                     else ShowCrisisReviewArchive();
                 }, 18);
-            PlaceTopLeft(crisis.rectTransform(), 504f, 566f, 190f, 48f);
+            PlaceTopLeft(crisis.rectTransform(), 504f, buttonY, 190f, 48f);
             Button close = UiTheme.MakeButton(content, "返回小镇", () => ClosePanel(root), 18);
-            PlaceTopLeft(close.rectTransform(), 716f, 566f, 180f, 48f);
+            PlaceTopLeft(close.rectTransform(), 716f, buttonY, 180f, 48f);
+            FitEventPanel(root, buttonY + 48f);
         }
 
         public void ShowNewsCenter(int filter = -1)
@@ -78,7 +82,7 @@ namespace EconTown
             GameState state = GameState.I;
             if (state == null) return;
             LongTermExperienceService.Ensure(state);
-            GameObject root = BeginPanel("经济新闻中心", 1040f, 780f);
+            GameObject root = BeginPanel("经济新闻中心", 1040f, 820f);
             RectTransform content = ContentOf(root);
             string[] labels = { "全部", "企业", "居民", "政策", "宏观", "特殊" };
             for (int i = 0; i < labels.Length; i++)
@@ -96,23 +100,24 @@ namespace EconTown
             }
 
             int row = 0;
-            for (int i = 0; i < state.experience.news.Count && row < 7; i++)
+            for (int i = 0; i < state.experience.news.Count && row < 5; i++)
             {
                 EconomicNewsItem item = state.experience.news[i];
                 if (filter >= 0 && (int)item.category != filter) continue;
                 RectTransform card = ExperienceCard(content, "Day " + item.worldDay + " · " + CategoryName(item.category),
-                    8f, 58f + row * 78f, 976f, 68f, NewsColor(item.category));
-                ExperienceText(card, "<b>" + item.headline + "</b>　" + item.detail + "\n<size=14>依据：" + item.cause + "</size>",
-                    16, 14f, 24f, 768f, 42f, UiTheme.TextMain);
+                    8f, 58f + row * 112f, 976f, 100f, NewsColor(item.category));
+                Text line = ExperienceText(card, "<b>" + item.headline + "</b>\n" + item.detail,
+                    16, 14f, 28f, 760f, 64f, UiTheme.TextMain);
+                line.verticalOverflow = VerticalWrapMode.Overflow;
                 Button view = UiTheme.MakeButton(card, "查看数据", () => OpenExperienceTarget(item.viewTarget), 15);
-                PlaceTopLeft(view.rectTransform(), 810f, 17f, 148f, 38f);
+                PlaceTopLeft(view.rectTransform(), 800f, 30f, 156f, 42f);
                 row++;
             }
             if (row == 0)
                 ExperienceText(content, "当前分类还没有新闻。新闻只会在真实状态满足条件时出现。",
                     20, 120f, 220f, 752f, 80f, UiTheme.TextSub, TextAnchor.MiddleCenter);
             Button close = UiTheme.MakeButton(content, "返回", () => ClosePanel(root), 18);
-            PlaceTopLeft(close.rectTransform(), 396f, 626f, 200f, 48f);
+            PlaceTopLeft(close.rectTransform(), 396f, 640f, 200f, 48f);
         }
 
         public void ShowEconomicHistory(int tab = 0)
@@ -188,20 +193,23 @@ namespace EconTown
         {
             GameState state = GameState.I;
             if (state == null || !state.experience.residentCrisisActive) return;
-            GameObject root = BeginPanel("居民生活危机 · 选择恢复路径", 860f, 640f);
+            GameObject root = BeginPanel("居民生活危机 · 选择恢复路径", 860f, 620f);
             MarkMandatoryDecision(root);
+            HideFalseClose(root);
             RectTransform content = ContentOf(root);
             ResidentState resident = state.resident;
-            ExperienceText(content, "现金 ¥" + resident.cash.ToString("0") + "　储蓄 ¥" + resident.savings.ToString("0") +
-                "　饱腹 " + resident.satiety.ToString("0") + "　失业 " + resident.unemployedDays + " 天\n" +
-                "生活危机不会删除存档。你可以用时间、储蓄或公共预算换取恢复。",
-                20, 20f, 10f, 772f, 92f, UiTheme.TextMain, TextAnchor.MiddleCenter);
-            CrisisRecoveryButton(content, "找一份临时兼职", "现金 +¥35，但精力 -12", 20f, 132f, () => ResolveResidentCrisis(root, "gig"));
-            CrisisRecoveryButton(content, "动用储蓄", "最多取出 ¥120", 410f, 132f, () => ResolveResidentCrisis(root, "savings"));
-            CrisisRecoveryButton(content, "申请临时福利", "居民 +¥80，政府预算 -¥80", 20f, 236f, () => ResolveResidentCrisis(root, "welfare"));
-            CrisisRecoveryButton(content, "最低消费方案", "先恢复基本饱腹与情绪", 410f, 236f, () => ResolveResidentCrisis(root, "cut"));
-            ExperienceText(content, "危机解除条件：现金、基本生活或就业状态至少有一项脱离危险组合。",
-                17, 30f, 370f, 752f, 64f, UiTheme.TextSub, TextAnchor.MiddleCenter);
+            const float width = 812f;
+            float y = EventBrief(content, "家里同时缺钱、缺吃的、也没班上",
+                "现金 ¥" + resident.cash.ToString("0") + "    储蓄 ¥" + resident.savings.ToString("0") +
+                "    吃饱程度 " + resident.satiety.ToString("0") + "    失业 " + resident.unemployedDays + " 天\n" +
+                "存档还在。用时间、存款，或者政府的一笔钱，先把这一天撑过去。",
+                0f, 0f, width, UiTheme.Bad) + 16f;
+            float col = (width - 16f) * .5f;
+            EventChoice(content, "找一份临时兼职", "现金 +¥35，精力 -12", 0f, y, col, () => ResolveResidentCrisis(root, "gig"));
+            EventChoice(content, "动用储蓄", "最多取出 ¥120", col + 16f, y, col, () => ResolveResidentCrisis(root, "savings"));
+            EventChoice(content, "申请临时福利", "居民 +¥80，政府预算 -¥80", 0f, y + 100f, col, () => ResolveResidentCrisis(root, "welfare"));
+            EventChoice(content, "先只买必需", "先把吃饱和情绪拉回来", col + 16f, y + 100f, col, () => ResolveResidentCrisis(root, "cut"));
+            FitEventPanel(root, y + 200f);
         }
 
         void ResolveResidentCrisis(GameObject root, string action)
@@ -214,22 +222,22 @@ namespace EconTown
         public void ShowCrisisReview(CrisisReviewRecord review)
         {
             if (review == null) return;
-            GameObject root = BeginPanel("危机复盘 · " + review.kind, 820f, 620f);
+            GameObject root = BeginPanel("危机复盘 · " + review.kind, 820f, 560f);
             RectTransform content = ContentOf(root);
-            string body = "<b>危机发生</b>　Day " + review.startedWorldDay + "\n" + review.cause +
-                "\n\n<b>恢复过程</b>\n" + review.recovery +
-                "\n\n<b>恢复结果</b>　Day " + review.recoveredWorldDay + "\n" + review.result;
-            Text reviewText = ExperienceText(content, body, 20, 22f, 10f, 728f, 424f, UiTheme.TextMain);
-            reviewText.verticalOverflow = VerticalWrapMode.Overflow;
-            float reviewShift = ExpandTopText(reviewText);
-            GrowPanel(root, reviewShift);
-            Button close = UiTheme.MakeButton(content, "完成复盘", () =>
+            const float width = 772f;
+            float y = EventBrief(content, "危机发生", "Day " + review.startedWorldDay + "\n" + review.cause,
+                0f, 0f, width, UiTheme.Bad) + 12f;
+            y += EventBrief(content, "你做了什么", review.recovery, 0f, y, width, UiTheme.Accent) + 12f;
+            y += EventBrief(content, "结果", "Day " + review.recoveredWorldDay + "\n" + review.result,
+                0f, y, width, UiTheme.Good) + 20f;
+            Button close = UiTheme.MakeButton(content, "看完了", () =>
             {
                 if (GameState.I.experience.pendingCrisisReview == review)
                     GameState.I.experience.pendingCrisisReview = null;
                 ClosePanel(root);
             }, 20);
-            PlaceTopLeft(close.rectTransform(), 260f, 466f + reviewShift, 260f, 52f);
+            PlaceTopLeft(close.rectTransform(), (width - 240f) * .5f, y, 240f, 52f);
+            FitEventPanel(root, y + 52f);
         }
 
         void ShowCrisisReviewArchive()
@@ -286,12 +294,6 @@ namespace EconTown
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Truncate;
             return text;
-        }
-
-        void CrisisRecoveryButton(RectTransform parent, string title, string detail, float x, float y, System.Action action)
-        {
-            Button button = UiTheme.MakeButton(parent, title + "\n<size=15>" + detail + "</size>", action, 19);
-            PlaceTopLeft(button.rectTransform(), x, y, 370f, 82f);
         }
 
         static string CategoryName(NewsCategory category)

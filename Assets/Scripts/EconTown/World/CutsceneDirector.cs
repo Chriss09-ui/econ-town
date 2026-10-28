@@ -139,6 +139,11 @@ namespace EconTown
                 return;
             }
 
+            // 底色先铺满:插画没画到的像素不再透出底下的小镇和按钮。
+            Image backing = UiTheme.MakeImage(layer, new Color32(0x14, 0x10, 0x0c, 255), "cutsceneBacking");
+            backing.rectTransform.Stretch();
+            backing.raycastTarget = true;
+
             // 底图:320×180 ×4 = 1280×720,Point 采样与全镇观感一致(§149)
             Image bg = UiTheme.MakeImage(layer, Color.white, "cutsceneBg");
             bg.sprite = PixelArt.Cutscene(pending.id);
@@ -148,11 +153,12 @@ namespace EconTown
             BuildOverlays(pending.id, layer);
 
             // 底部文案带 + 打字机
-            Image strip = UiTheme.MakeImage(layer, new Color32(0x14, 0x10, 0x0c, 208), "cutsceneText");
-            strip.rectTransform.anchorMin = strip.rectTransform.anchorMax = new Vector2(0.5f, 0f);
+            Image strip = UiTheme.MakeImage(layer, new Color32(0x14, 0x10, 0x0c, 255), "cutsceneText");
+            strip.rectTransform.anchorMin = new Vector2(0f, 0f);
+            strip.rectTransform.anchorMax = new Vector2(1f, 0f);
             strip.rectTransform.pivot = new Vector2(0.5f, 0f);
             strip.rectTransform.anchoredPosition = Vector2.zero;
-            strip.rectTransform.sizeDelta = new Vector2(1280f, 148f);
+            strip.rectTransform.sizeDelta = new Vector2(0f, 132f);
             typingText = UiTheme.MakeText(strip.transform, "", 24, UiTheme.TextMain, TextAnchor.UpperLeft);
             typingText.rectTransform.Stretch();
             typingText.rectTransform.offsetMin = new Vector2(84, 10);
@@ -160,13 +166,19 @@ namespace EconTown
             typingText.horizontalOverflow = HorizontalWrapMode.Wrap;
             typingText.verticalOverflow = VerticalWrapMode.Overflow;
 
-            // 左上角档名小签(截图验收时可辨识是哪一段)
-            Text tag = UiTheme.MakeText(layer, "小镇大事记 · " + CutsceneService.Title(pending.id), 18,
-                new Color32(0xff, 0xf1, 0xd3, 220), TextAnchor.UpperLeft);
+            // 左上角档名小签。浅色插画（报纸、朝霞）上奶油字会消失，所以先垫一块实心底。
+            string tagLabel = "小镇大事记 · " + CutsceneService.Title(pending.id);
+            Image tagPlate = UiTheme.MakeImage(layer, new Color32(0x14, 0x10, 0x0c, 235), "cutsceneTagPlate");
+            tagPlate.rectTransform.anchorMin = tagPlate.rectTransform.anchorMax = new Vector2(0f, 1f);
+            tagPlate.rectTransform.pivot = new Vector2(0f, 1f);
+            tagPlate.rectTransform.anchoredPosition = new Vector2(8f, -8f);
+            tagPlate.rectTransform.sizeDelta = new Vector2(Mathf.Clamp(36 + tagLabel.Length * 18, 200, 520), 36f);
+            Text tag = UiTheme.MakeText(layer, tagLabel, 18,
+                new Color32(0xff, 0xf1, 0xd3, 255), TextAnchor.MiddleLeft);
             tag.rectTransform.anchorMin = tag.rectTransform.anchorMax = new Vector2(0f, 1f);
             tag.rectTransform.pivot = new Vector2(0f, 1f);
-            tag.rectTransform.anchoredPosition = new Vector2(16f, -14f);
-            tag.rectTransform.sizeDelta = new Vector2(420f, 30f);
+            tag.rectTransform.anchoredPosition = new Vector2(20f, -11f);
+            tag.rectTransform.sizeDelta = new Vector2(tagPlate.rectTransform.sizeDelta.x - 24f, 30f);
 
             // 「跳过」常驻(§149 两路之一;另一路是 Esc)
             Button skip = UiTheme.MakeButton(layer, "跳过 ≫", Finish, 20);
@@ -176,7 +188,7 @@ namespace EconTown
             skip.rectTransform().sizeDelta = new Vector2(150f, 48f);
 
             fullText = text;
-            // 溢出保护:按 CJK 方块字宽估算显示行数,超出文案带内容高(≈128px)自动缩字号,
+            // 溢出保护:按 CJK 方块字宽估算显示行数,超出文案带内容高(132 条带减去上下各 10)自动缩字号,
             // 防止以后改长文案时第四行尾部溢出条带(verticalOverflow=Overflow 无裁剪)。
             int fontSize = 24;
             while (fontSize > 16)
@@ -188,7 +200,7 @@ namespace EconTown
                 int rows = 0;
                 for (int i = 0; i < parts.Length; i++)
                     rows += Mathf.Max(1, Mathf.CeilToInt(parts[i].Length / (float)perLine));
-                if (rows * lineH <= 126f) break;
+                if (rows * lineH <= 110f) break;
                 fontSize -= 2;
             }
             typingText.fontSize = fontSize;
@@ -280,8 +292,8 @@ namespace EconTown
                 case (int)CutsceneId.Homecoming:
                     // 沉日光晕与门前钥匙串(复审#4:原 266,26 落在空街面且 y<37 被底部
                     // 文案带遮蔽——移到钥匙串实际位置 175,43,恰在 strip 上缘之上)
-                    pulseSprites.Add(Overlay(layer, PixelArt.CutsceneSparkle(), 46f, 162f));
-                    pulseSprites.Add(Overlay(layer, PixelArt.CutsceneSparkle(), 175f, 43f));
+                    pulseSprites.Add(Overlay(layer, PixelArt.CutsceneSparkle(), 124f, 156f));
+                    pulseSprites.Add(Overlay(layer, PixelArt.CutsceneSparkle(), 172f, 68f));
                     break;
             }
         }

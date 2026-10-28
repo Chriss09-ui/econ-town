@@ -453,7 +453,6 @@ namespace EconTown
             CutsceneActive = true;
             cutsceneLayer.gameObject.SetActive(true);
             cutsceneLayer.SetAsLastSibling();
-            if (toastRoot != null) toastRoot.SetAsLastSibling();   // 围猎三#18:过场层压轴后 Toast 仍须在其上,否则开播前的当日提示被盖到过期
             return cutsceneLayer;
         }
 
@@ -469,6 +468,7 @@ namespace EconTown
                 else DestroyImmediate(child.gameObject);
             }
             cutsceneLayer.gameObject.SetActive(false);
+            if (toastRoot != null) toastRoot.SetAsLastSibling();
         }
 
         void LayoutBottomChrome()
@@ -698,6 +698,73 @@ namespace EconTown
             if (panel != null) mandatoryDecisionPanels.Add(panel);
         }
 
+        /// <summary>必须点选才能离开的事件窗：右上角的叉点了也不会关，留着只像坏按钮。</summary>
+        protected void HideFalseClose(GameObject panel)
+        {
+            if (panel == null) return;
+            Transform bar = panel.transform.Find("titlebar");
+            if (bar == null) return;
+            for (int i = 0; i < bar.childCount; i++)
+            {
+                Text label = bar.GetChild(i).GetComponentInChildren<Text>();
+                if (label != null && label.text == "×")
+                    bar.GetChild(i).gameObject.SetActive(false);
+            }
+        }
+
+        static readonly Color EventInkSoft = new Color32(0x5a, 0x4e, 0x42, 255);
+
+        /// <summary>事件纸页。返回高度。正文按实际行数撑开。</summary>
+        protected float EventBrief(RectTransform parent, string kicker, string body, float x, float y, float width, Color accent)
+        {
+            float textW = Mathf.Max(80f, width - 52f);
+            Image card = UiTheme.MakeImage(parent, UiTheme.Paper, "eventBrief");
+            UiTheme.ApplyTicketFrame(card);
+            PlaceTopLeft(card.rectTransform, x, y, width, 120f);
+
+            Text copy = UiTheme.MakeText(card.transform, body, 20, UiTheme.Ink, TextAnchor.UpperLeft);
+            PlaceTopLeft(copy.rectTransform, 28f, 44f, textW, 64f);
+            float bodyH = Mathf.Max(48f, MeasuredTextHeight(copy) + 6f);
+            copy.rectTransform.sizeDelta = new Vector2(textW, bodyH);
+
+            float cardH = 44f + bodyH + 16f;
+            card.rectTransform.sizeDelta = new Vector2(width, cardH);
+
+            Image stripe = UiTheme.MakeImage(card.transform, accent, "eventStripe");
+            PlaceTopLeft(stripe.rectTransform, 8f, 12f, 6f, cardH - 24f);
+
+            Text kick = UiTheme.MakeText(card.transform, kicker, 15, accent, TextAnchor.MiddleLeft, FontStyle.Bold);
+            PlaceTopLeft(kick.rectTransform, 28f, 14f, textW, 24f);
+            return cardH;
+        }
+
+        protected Button EventChoice(RectTransform parent, string title, string detail, float x, float y, float width, System.Action action)
+        {
+            const float height = 88f;
+            Button button = UiTheme.MakeButton(parent, title, action, 20);
+            PlaceTopLeft(button.rectTransform(), x, y, width, height);
+            Text label = button.GetComponentInChildren<Text>();
+            if (label != null)
+            {
+                label.alignment = TextAnchor.MiddleLeft;
+                label.fontStyle = FontStyle.Bold;
+                label.color = UiTheme.Ink;
+                PlaceTopLeft(label.rectTransform, 18f, 12f, width - 36f, 32f);
+            }
+            Text sub = UiTheme.MakeText(button.transform, detail, 16, EventInkSoft, TextAnchor.MiddleLeft);
+            PlaceTopLeft(sub.rectTransform, 18f, 46f, width - 36f, 28f);
+            return button;
+        }
+
+        protected void FitEventPanel(GameObject root, float contentBottom)
+        {
+            if (root == null) return;
+            RectTransform panel = root.GetComponent<RectTransform>();
+            if (panel == null) return;
+            float extra = contentBottom + 16f - (panel.sizeDelta.y - 88f);
+            if (extra > 1f) GrowPanel(root, extra);
+        }
+
         protected void ResolveMandatoryDecision(GameObject panel)
         {
             if (panel != null) mandatoryDecisionPanels.Remove(panel);
@@ -835,7 +902,10 @@ namespace EconTown
             t.rectTransform.offsetMax = new Vector2(-16f, -8f);
             t.horizontalOverflow = HorizontalWrapMode.Wrap;
             t.verticalOverflow = VerticalWrapMode.Truncate;
-            toastRoot.SetAsLastSibling();
+            if (CutsceneActive && cutsceneLayer != null)
+                cutsceneLayer.SetAsLastSibling();
+            else
+                toastRoot.SetAsLastSibling();
             TrimToasts();
             ReflowToasts();
             if (Application.isPlaying) StartCoroutine(FadeOut(go.transform, Mathf.Max(3.2f, 1.8f + lines * 0.8f)));

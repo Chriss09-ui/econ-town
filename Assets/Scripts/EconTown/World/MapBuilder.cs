@@ -1411,10 +1411,12 @@ namespace EconTown
                 new Vector2(.875f, 1f), new Vector2(0f, 0f));
             AddInteriorSolid(Prop(furn, "clock", PixelArt.WallClock(), o + new Vector3(2.2f, 10f), 1f),
                 new Vector2(.75f, .875f), new Vector2(0f, 0f));
-            AddInteriorSolid(Prop(furn, "stanchion_a", PixelArt.RopeStanchion(), o + new Vector3(7.6f, 2.7f), 1f),
-                new Vector2(.5f, 1.7f), new Vector2(0f, 0f));
-            AddInteriorSolid(Prop(furn, "stanchion_b", PixelArt.RopeStanchion(), o + new Vector3(10.4f, 2.7f), 1f),
-                new Vector2(.5f, 1.7f), new Vector2(0f, 0f));
+            // 隔离柱原先用整根柱身做碰撞（0.5×1.7，中心无偏移），南缘几乎贴进店落点、北缘顶到政务台，
+            // 中缝又被柜台封死，玩家从门口走进去会被两根柱子别住。碰撞只留铜座脚印，并拉开到走道两侧。
+            AddInteriorSolid(Prop(furn, "stanchion_a", PixelArt.RopeStanchion(), o + new Vector3(6.8f, 2.7f), 1f),
+                new Vector2(.45f, .4f), new Vector2(0f, -.675f));
+            AddInteriorSolid(Prop(furn, "stanchion_b", PixelArt.RopeStanchion(), o + new Vector3(11.2f, 2.7f), 1f),
+                new Vector2(.45f, .4f), new Vector2(0f, -.675f));
             AddInteriorSolid(Prop(furn, "bench_c", PixelArt.WaitingBench(), o + new Vector3(4.5f, 3.8f), 1f),   // 复审:椅列 y 与央行等候角同值,错开
                 new Vector2(1.7f, .55f), new Vector2(0f, -.25f));
             AddInteriorSolid(Prop(furn, "bench_d", PixelArt.WaitingBench(), o + new Vector3(13.5f, 3.8f), 1f),   // 复审:椅列 y 与央行等候角同值,错开

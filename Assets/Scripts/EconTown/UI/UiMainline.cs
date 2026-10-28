@@ -26,6 +26,7 @@ namespace EconTown
             string body = handoff
                 ? MainlineGuide.HandoffText(state) + "\n\n下一步只做一件事：\n" + cue.line
                 : cue.line;
+            if (!string.IsNullOrEmpty(cue.detail)) body += "\n\n" + cue.detail;
             body += "\n\n" + MainlineGuide.RoleSentence(state);
             Text text = UiTheme.MakeText(content, body, 22, UiTheme.TextMain, TextAnchor.UpperLeft);
             text.rectTransform.anchorMin = Vector2.zero;

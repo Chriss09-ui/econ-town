@@ -113,45 +113,50 @@ namespace EconTown
             LongTermExperienceService.Ensure(s);
             bool mandatory = s.economy.financialCrisisActive && !s.experience.enterpriseRecovery.active;
             if (!mandatory && !s.experience.enterpriseRecovery.active) return;
-            GameObject root = BeginPanel(mandatory ? "财务危机 · 选择恢复计划" : "企业恢复计划 · 进行中", 860, 690);
-            if (mandatory) MarkMandatoryDecision(root);
-            RectTransform c = ContentOf(root);
-
-            RectTransform warning = ReportCard(c, mandatory ? "连续三日资金低于 ¥-1000" : "恢复不是一个解除按钮",
-                0f, 0f, 788f, 144f, mandatory ? UiTheme.Bad : UiTheme.Accent);
-            ReportText(warning,
-                "当前现金 ¥" + s.money.ToString("0") + "  ·  库存 " + s.inventory + " 杯  ·  员工 " + s.employees + " 人\n" +
-                (s.experience.enterpriseRecovery.active
-                    ? s.experience.enterpriseRecovery.latestStatus
-                    : "选择恢复动作后仍需继续经营，连续 2 日正现金流才算真正恢复。"),
-                null, 18f, 42f, 752f, 84f, UiTheme.Ink, 18, TextAnchor.UpperLeft, FontStyle.Bold);
-
-            // 救援动作只在强制决策时提供：恢复进行中的查看态不渲染按钮，防止反复执行一次性效果。
+            GameObject root = BeginPanel(mandatory ? "财务危机 · 选择恢复计划" : "企业恢复计划 · 进行中", 860f, 640f);
             if (mandatory)
             {
-                CrisisAction(c, "清库存并重新定价", "折价回笼资金 · 售价靠近成本上方", 0f, 164f,
+                MarkMandatoryDecision(root);
+                HideFalseClose(root);
+            }
+            RectTransform c = ContentOf(root);
+            const float width = 812f;
+            string status = "现金 ¥" + s.money.ToString("0") + "    库存 " + s.inventory + " 杯    员工 " + s.employees + " 人\n" +
+                (s.experience.enterpriseRecovery.active
+                    ? s.experience.enterpriseRecovery.latestStatus
+                    : "选一个动作之后还要继续经营。连续 2 天赚到钱，并且资金回到 ¥-1000 以上，才算缓过来。");
+            float y = EventBrief(c, mandatory ? "连续三天，店里的钱低于 ¥-1000" : "恢复还没完成",
+                status, 0f, 0f, width, mandatory ? UiTheme.Bad : UiTheme.Accent) + 16f;
+
+            if (mandatory)
+            {
+                float col = (width - 16f) * .5f;
+                EventChoice(c, "清库存并重新定价", "折价回笼资金，售价靠近成本", 0f, y, col,
                     () => ApplyEnterpriseRecovery(root, "liquidate", mandatory));
-                CrisisAction(c, "紧缩经营", "减少 1 名员工 · 停止广告与扩张", 404f, 164f,
+                EventChoice(c, "紧缩经营", "减少 1 名员工，停下广告", col + 16f, y, col,
                     () => ApplyEnterpriseRecovery(root, "tighten", mandatory));
-                CrisisAction(c, "出售一档设备", "获得周转金 · 品质等级可能下降", 0f, 264f,
+                EventChoice(c, "出售一档设备", "换一笔周转金，品质可能下降", 0f, y + 100f, col,
                     () => ApplyEnterpriseRecovery(root, "asset", mandatory));
-                CrisisAction(c, "暂停并重整企业", "企业从基础规模重开 · 其他视角进度保留", 404f, 264f, () =>
+                EventChoice(c, "暂停并重整", "店从基础规模重开，其他进度保留", col + 16f, y + 100f, col, () =>
                 {
                     LongTermExperienceService.PauseAndRestartEnterprise(s);
                     ResolveMandatoryDecision(root);
                     if (s.experience.pendingCrisisReview != null) ShowCrisisReview(s.experience.pendingCrisisReview);
                 });
+                y += 216f;
             }
 
-            ReportText(c,
-                "恢复条件：连续 2 个结算日利润为正，且资金高于 ¥-1000。你仍可照常调整价格、产量、原料与员工。\n" +
-                "危机结束后会生成复盘，说明成因、行动与恢复结果。",
-                null, 18f, 382f, 788f, 82f, UiTheme.TextSub, 17, TextAnchor.MiddleCenter);
+            Text note = UiTheme.MakeText(c, "缓过来之后，这里会留下一张复盘：当时为什么亏、你做了什么、结果如何。",
+                16, UiTheme.TextSub, TextAnchor.MiddleLeft);
+            PlaceTopLeft(note.rectTransform, 0f, y, width, 48f);
+            y += 56f;
             if (!mandatory)
             {
                 Button close = UiTheme.MakeButton(c, "返回经营", () => ClosePanel(root), 18);
-                PlaceTopLeft(close.rectTransform(), 284f, 490f, 220f, 48f);
+                PlaceTopLeft(close.rectTransform(), (width - 220f) * .5f, y, 220f, 48f);
+                y += 48f;
             }
+            FitEventPanel(root, y);
         }
 
         void ApplyEnterpriseRecovery(GameObject root, string plan, bool mandatory)
@@ -160,13 +165,6 @@ namespace EconTown
             LongTermExperienceService.BeginEnterpriseRecovery(state, plan);
             if (mandatory) ResolveMandatoryDecision(root); else ClosePanel(root);
             ShowToast("恢复动作已执行；接下来需要用真实经营结果证明现金流已经修复");
-        }
-
-        Button CrisisAction(RectTransform parent, string title, string detail, float x, float y, System.Action action)
-        {
-            Button button = UiTheme.MakeButton(parent, title + "\n<size=16>" + detail + "</size>", action, 21);
-            PlaceTopLeft(button.rectTransform(), x, y, 366f, 78f);
-            return button;
         }
 
         RectTransform ReportCard(RectTransform parent, string title, float x, float y, float width, float height, Color accent)
